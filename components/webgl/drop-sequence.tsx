@@ -49,28 +49,31 @@ const FRAG = /* glsl */ `
 
     // Chromatic split — strongest out of focus and toward the frame edge.
     float ca = (1.0 - uFocus) * 0.005 + edge * 0.002;
+    vec4 base = texture2D(uTex, uv);
     vec3 c;
     c.r = texture2D(uTex, uv + vec2(ca, 0.0)).r;
-    c.g = texture2D(uTex, uv).g;
+    c.g = base.g;
     c.b = texture2D(uTex, uv - vec2(ca, 0.0)).b;
+    // Cutouts carry their own alpha; boxed photographs are fully opaque, so
+    // this is a no-op for them.
+    float cut = base.a;
 
     // The panel is the light source in a dark room, so it stays bright — it is
     // only pulled toward the site's neutrals, not crushed to black.
     float l = dot(c, vec3(0.299, 0.587, 0.114));
-    c = mix(vec3(l), c, 0.82);
+    c = mix(vec3(l), c, 0.88);
     c = (c - 0.5) * 1.16 + 0.5;
     c = clamp(c, 0.0, 1.0);
 
     // Depth: whatever is not the current piece falls back into the dark.
-    c *= mix(0.34, 1.0, uFocus);
+    c *= mix(0.30, 1.05, uFocus);
 
-    // Feather the rectangle away at its edges. This is the move that stops it
-    // reading as a photograph pasted onto a black page.
-    float fx = smoothstep(0.0, 0.15, vUv.x) * (1.0 - smoothstep(0.85, 1.0, vUv.x));
-    float fy = smoothstep(0.0, 0.10, vUv.y) * (1.0 - smoothstep(0.90, 1.0, vUv.y));
-    float feather = fx * fy;
+    // A light feather at the frame edge, kept gentle so it never bites into a
+    // cut-out garment that runs close to the edge.
+    float fx = smoothstep(0.0, 0.06, vUv.x) * (1.0 - smoothstep(0.94, 1.0, vUv.x));
+    float fy = smoothstep(0.0, 0.05, vUv.y) * (1.0 - smoothstep(0.95, 1.0, vUv.y));
 
-    gl_FragColor = vec4(c, uOpacity * feather);
+    gl_FragColor = vec4(c, uOpacity * cut * fx * fy);
     #include <colorspace_fragment>
   }
 `;

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { Product } from '@/lib/shopify/types';
 import { formatMoney, cn } from '@/lib/utils';
+import { cutout } from '@/lib/cutouts';
 
 /**
  * The catalogue is shot on a light grey studio backdrop, which fights a black
@@ -22,7 +23,11 @@ export default function ProductCard({
   className?: string;
 }) {
   const [hover, setHover] = useState(false);
+  const cut = cutout(product.handle);
   const primary = product.featuredImage ?? product.images[0] ?? null;
+  // On a cutout there is no grey backdrop left to grade down, and object-contain
+  // keeps the garment whole instead of cropping it to fill the tile.
+  const primaryUrl = cut ?? primary?.url ?? null;
   const secondary = product.images.find((i) => i.url !== primary?.url) ?? null;
   const soldOut = !product.availableForSale;
 
@@ -38,20 +43,21 @@ export default function ProductCard({
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      <div className="relative aspect-[4/5] overflow-hidden bg-carbon">
+      <div className={cn('relative aspect-[4/5] overflow-hidden', cut ? 'bg-ink' : 'bg-carbon')}>
         {primary && (
           <Image
-            src={primary.url}
+            src={primaryUrl!}
             alt={primary.altText || product.title}
             fill
             priority={priority}
             sizes="(min-width:1280px) 25vw, (min-width:768px) 33vw, 50vw"
             className={cn(
-              'object-cover transition-[opacity,transform] duration-[900ms] ease-cine',
+              'transition-[opacity,transform] duration-[900ms] ease-cine',
+              cut ? 'object-contain p-6' : 'object-cover',
               hover && secondary ? 'opacity-0' : 'opacity-100',
               'group-hover:scale-[1.04]',
             )}
-            style={{ filter: 'brightness(0.8) contrast(1.16) saturate(0.82)' }}
+            style={cut ? undefined : { filter: 'brightness(0.8) contrast(1.16) saturate(0.82)' }}
           />
         )}
         {secondary && (

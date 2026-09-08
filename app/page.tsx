@@ -5,6 +5,7 @@ import type { Product } from '@/lib/shopify/types';
 import { BRAND, FILM, FEATURED, HERO, curate, showable } from '@/lib/brand';
 import { formatMoney } from '@/lib/utils';
 import { sized, TEXTURE_WIDTH } from '@/lib/shopify-image';
+import { cutout } from '@/lib/cutouts';
 import HeroFilm from '@/components/home/hero-film';
 import SectionHeading from '@/components/home/section-heading';
 import DropExperience from '@/components/home/drop-experience';
@@ -124,8 +125,12 @@ export default async function HomePage() {
           handle: p.handle,
           title: p.title,
           price: p.priceRange.minVariantPrice,
-          // Sized on the server so the payload never carries a full-size URL.
-          image: sized(p.featuredImage?.url ?? p.images[0]?.url ?? '', TEXTURE_WIDTH),
+          // Prefer the background-removed cutout so the garment floats on the
+          // ink instead of arriving inside a grey studio box. Shopify URLs are
+          // sized on the server so the payload never carries a full-size one.
+          image:
+            cutout(p.handle) ??
+            sized(p.featuredImage?.url ?? p.images[0]?.url ?? '', TEXTURE_WIDTH),
         }))}
       />
 
