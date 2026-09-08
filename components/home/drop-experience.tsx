@@ -3,8 +3,9 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Product } from '@/lib/shopify/types';
+import type { Money } from '@/lib/shopify/types';
 import { formatMoney } from '@/lib/utils';
+import { sized, TEXTURE_WIDTH } from '@/lib/shopify-image';
 import { gsap, ScrollTrigger, reducedMotion } from '@/lib/gsap';
 
 const DropSequence = dynamic(() => import('@/components/webgl/drop-sequence'), {
@@ -24,7 +25,15 @@ const DropSequence = dynamic(() => import('@/components/webgl/drop-sequence'), {
  *     state. Only the *active product* is state — about five renders across the
  *     whole sequence instead of one per frame.
  */
-export default function DropExperience({ products }: { products: Product[] }) {
+/** Only what the sequence actually renders — keeps the RSC payload small. */
+export type DropItem = {
+  handle: string;
+  title: string;
+  price: Money;
+  image: string;
+};
+
+export default function DropExperience({ items: incoming }: { items: DropItem[] }) {
   const root = useRef<HTMLDivElement>(null);
   const rail = useRef<HTMLSpanElement>(null);
   const progress = useRef(0);
@@ -32,12 +41,11 @@ export default function DropExperience({ products }: { products: Product[] }) {
   const [webgl, setWebgl] = useState(false);
   const title = useRef<HTMLHeadingElement>(null);
 
-  const items = useMemo(() => products.slice(0, 7), [products]);
+  const items = useMemo(() => incoming.slice(0, 7), [incoming]);
+  // Textures are fetched by three.js directly, so they must be sized here —
+  // next/image never sees them.
   const images = useMemo(
-    () =>
-      items
-        .map((p) => p.featuredImage?.url ?? p.images[0]?.url ?? '')
-        .filter(Boolean),
+    () => items.map((p) => sized(p.image, TEXTURE_WIDTH)).filter(Boolean),
     [items],
   );
 
@@ -128,7 +136,7 @@ export default function DropExperience({ products }: { products: Product[] }) {
             </div>
             <div className="mt-5 flex flex-wrap items-center gap-6">
               <p className="text-lg tabular-nums text-mist">
-                {formatMoney(current.priceRange.minVariantPrice)}
+                {formatMoney(current.price)}
               </p>
               <Link
                 href={`/products/${current.handle}`}

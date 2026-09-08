@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getCollection, getCollectionProducts, getProducts } from '@/lib/shopify';
+import { getCollection, getCollectionProducts, getProducts, getCollections } from '@/lib/shopify';
 import { curate } from '@/lib/brand';
 import ProductGrid from '@/components/product/product-grid';
 import { RevealText, Reveal } from '@/components/motion/reveal';
@@ -9,6 +9,15 @@ export const revalidate = 1800;
 
 /** shop-all is a virtual collection: everything, in merchandised order. */
 const ALL = 'shop-all';
+
+/**
+ * Prerender every collection at build time. These were server-rendered per
+ * request, which put a Shopify round trip in front of each navigation.
+ */
+export async function generateStaticParams() {
+  const collections = await getCollections().catch(() => []);
+  return [{ handle: ALL }, ...collections.map((c) => ({ handle: c.handle }))];
+}
 
 export async function generateMetadata({
   params,

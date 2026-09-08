@@ -4,6 +4,7 @@ import { getCollectionProducts, getProducts } from '@/lib/shopify';
 import type { Product } from '@/lib/shopify/types';
 import { BRAND, FILM, FEATURED, HERO, curate, showable } from '@/lib/brand';
 import { formatMoney } from '@/lib/utils';
+import { sized, TEXTURE_WIDTH } from '@/lib/shopify-image';
 import HeroFilm from '@/components/home/hero-film';
 import SectionHeading from '@/components/home/section-heading';
 import DropExperience from '@/components/home/drop-experience';
@@ -33,9 +34,14 @@ export default async function HomePage() {
   const spotlight = drop.find((p) => p.handle === HERO) ?? sequence[0] ?? drop[0];
   const spotlightImage = spotlight?.images?.[1]?.url ?? spotlight?.featuredImage?.url ?? null;
 
-  const lookbook = Array.from(
-    new Set(allProducts.flatMap((p) => p.images.map((i) => i.url)).filter(Boolean)),
-  ).slice(0, 5);
+  // One frame per piece, across different pieces. Flattening every image and
+  // taking the first few gave four photographs of the same Smoke Box — which is
+  // both off-message under "Worn by the movement" and the heaviest imagery in
+  // the catalogue (2-3MB each).
+  const lookbook = showable(allProducts)
+    .map((p) => p.images[1]?.url ?? p.featuredImage?.url ?? '')
+    .filter(Boolean)
+    .slice(0, 4);
 
   return (
     <>
@@ -90,7 +96,15 @@ export default async function HomePage() {
       )}
 
       {/* ---- DROP: the collection as a scroll-driven dolly shot ---- */}
-      <DropExperience products={sequence} />
+      <DropExperience
+        items={sequence.map((p) => ({
+          handle: p.handle,
+          title: p.title,
+          price: p.priceRange.minVariantPrice,
+          // Sized on the server so the payload never carries a full-size URL.
+          image: sized(p.featuredImage?.url ?? p.images[0]?.url ?? '', TEXTURE_WIDTH),
+        }))}
+      />
 
       {/* --------------------------- FILM BREAK ---------------------------- */}
       <FilmBreak
