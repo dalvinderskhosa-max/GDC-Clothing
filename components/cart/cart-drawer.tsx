@@ -3,7 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from './cart-context';
-import { formatMoney } from '@/lib/utils';
+import { formatMoney, cn } from '@/lib/utils';
+import { cutout } from '@/lib/cutouts';
 
 export default function CartDrawer() {
   const { cart, isOpen, closeCart, updateQuantity, removeItem, isPending } = useCart();
@@ -58,17 +59,28 @@ export default function CartDrawer() {
                   <Link
                     href={`/products/${line.merchandise.product.handle}`}
                     onClick={closeCart}
-                    className="relative aspect-[3/4] w-20 flex-shrink-0 overflow-hidden bg-carbon"
-                  >
-                    {line.merchandise.product.featuredImage && (
-                      <Image
-                        src={line.merchandise.product.featuredImage.url}
-                        alt={line.merchandise.product.title}
-                        fill
-                        sizes="80px"
-                        className="object-cover"
-                      />
+                    className={cn(
+                      'relative aspect-[3/4] w-20 flex-shrink-0 overflow-hidden',
+                      cutout(line.merchandise.product.handle) ? 'bg-ink' : 'bg-carbon',
                     )}
+                  >
+                    {(() => {
+                      const cut = cutout(line.merchandise.product.handle);
+                      const src = cut ?? line.merchandise.product.featuredImage?.url;
+                      if (!src) return null;
+                      return (
+                        <Image
+                          src={src}
+                          alt={line.merchandise.product.title}
+                          fill
+                          // 80px slot, but ask for 2x so it stays sharp on
+                          // retina — sizes="80px" alone was resolving to a
+                          // 21px source and rendering as a blur.
+                          sizes="160px"
+                          className={cut ? 'object-contain p-1.5' : 'object-cover'}
+                        />
+                      );
+                    })()}
                   </Link>
 
                   <div className="flex flex-1 flex-col">
@@ -148,7 +160,15 @@ export default function CartDrawer() {
                 Checkout &middot; {formatMoney(cart.cost.totalAmount)}
               </a>
               <p className="mt-3 text-center text-[11px] uppercase tracking-brand text-mist">
-                Secure checkout powered by Shopify
+                Secure checkout &middot;{' '}
+                <a
+                  href="https://nuvic.co.uk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="link-wipe transition-colors hover:text-bone"
+                >
+                  Powered by Nuvic
+                </a>
               </p>
             </footer>
           </>

@@ -87,7 +87,7 @@ export default function ContactPanel({ storeDomain }: { storeDomain: string }) {
               Send us a message
             </a>
             <p className="t-body mt-4 max-w-md text-[13px]">
-              Opens our secure Shopify contact form in a new tab.
+              Opens our secure contact form in a new tab.
             </p>
           </>
         )}
