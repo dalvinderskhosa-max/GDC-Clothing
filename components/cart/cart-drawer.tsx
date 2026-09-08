@@ -1,0 +1,159 @@
+'use client';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import { useCart } from './cart-context';
+import { formatMoney } from '@/lib/utils';
+
+export default function CartDrawer() {
+  const { cart, isOpen, closeCart, updateQuantity, removeItem, isPending } = useCart();
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        aria-hidden={!isOpen}
+        onClick={closeCart}
+        className={`fixed inset-0 z-50 bg-black/60 transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+      />
+
+      {/* Panel */}
+      <aside
+        aria-label="Shopping bag"
+        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-paper text-ink shadow-2xl transition-transform duration-300 ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <header className="flex items-center justify-between border-b border-ink/10 px-5 py-4">
+          <h2 className="font-display text-xl uppercase tracking-brand">
+            Your Bag {cart?.totalQuantity ? `(${cart.totalQuantity})` : ''}
+          </h2>
+          <button
+            onClick={closeCart}
+            aria-label="Close bag"
+            className="text-2xl leading-none hover:opacity-60"
+          >
+            &times;
+          </button>
+        </header>
+
+        {!cart || cart.lines.length === 0 ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
+            <p className="font-display text-2xl uppercase tracking-brand">Your bag is empty</p>
+            <p className="text-sm text-smoke">Time to lock in. The grind doesn&apos;t stop.</p>
+            <button
+              onClick={closeCart}
+              className="mt-2 bg-ink px-6 py-3 text-sm font-semibold uppercase tracking-brand text-paper hover:bg-mauve"
+            >
+              Continue shopping
+            </button>
+          </div>
+        ) : (
+          <>
+            <ul className="flex-1 divide-y divide-ink/10 overflow-y-auto px-5">
+              {cart.lines.map((line) => (
+                <li key={line.id} className="flex gap-4 py-4">
+                  <Link
+                    href={`/products/${line.merchandise.product.handle}`}
+                    onClick={closeCart}
+                    className="relative aspect-[3/4] w-20 flex-shrink-0 overflow-hidden bg-cream"
+                  >
+                    {line.merchandise.product.featuredImage && (
+                      <Image
+                        src={line.merchandise.product.featuredImage.url}
+                        alt={line.merchandise.product.title}
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                      />
+                    )}
+                  </Link>
+
+                  <div className="flex flex-1 flex-col">
+                    <div className="flex justify-between gap-2">
+                      <Link
+                        href={`/products/${line.merchandise.product.handle}`}
+                        onClick={closeCart}
+                        className="text-sm font-semibold uppercase leading-tight hover:opacity-60"
+                      >
+                        {line.merchandise.product.title}
+                      </Link>
+                      <button
+                        onClick={() => removeItem(line.id)}
+                        aria-label="Remove item"
+                        className="text-smoke hover:text-ink"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                    {line.merchandise.title !== 'Default Title' && (
+                      <p className="mt-1 text-xs text-smoke">{line.merchandise.title}</p>
+                    )}
+
+                    <div className="mt-auto flex items-center justify-between pt-3">
+                      <div className="flex items-center border border-ink/20">
+                        <button
+                          onClick={() =>
+                            updateQuantity(
+                              line.id,
+                              line.merchandise.id,
+                              line.quantity - 1,
+                            )
+                          }
+                          className="px-2.5 py-1 hover:bg-cream"
+                          aria-label="Decrease quantity"
+                        >
+                          &minus;
+                        </button>
+                        <span className="min-w-[2rem] text-center text-sm">
+                          {line.quantity}
+                        </span>
+                        <button
+                          onClick={() =>
+                            updateQuantity(
+                              line.id,
+                              line.merchandise.id,
+                              line.quantity + 1,
+                            )
+                          }
+                          className="px-2.5 py-1 hover:bg-cream"
+                          aria-label="Increase quantity"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <span className="text-sm font-semibold">
+                        {formatMoney(line.cost.totalAmount)}
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <footer className="border-t border-ink/10 px-5 py-5">
+              <div className="mb-1 flex justify-between text-sm text-smoke">
+                <span>Subtotal</span>
+                <span>{formatMoney(cart.cost.subtotalAmount)}</span>
+              </div>
+              <p className="mb-4 text-xs text-smoke">
+                Shipping &amp; taxes calculated at checkout.
+              </p>
+              <a
+                href={cart.checkoutUrl}
+                className="block w-full bg-ink py-4 text-center text-sm font-semibold uppercase tracking-brand text-paper transition-colors hover:bg-mauve"
+              >
+                Checkout &middot; {formatMoney(cart.cost.totalAmount)}
+              </a>
+              <p className="mt-3 text-center text-[11px] uppercase tracking-brand text-smoke">
+                Secure checkout powered by Shopify
+              </p>
+            </footer>
+          </>
+        )}
+      </aside>
+    </>
+  );
+}
