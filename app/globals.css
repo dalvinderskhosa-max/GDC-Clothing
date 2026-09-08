@@ -4,46 +4,150 @@
 
 @layer base {
   :root {
-    color-scheme: light;
+    --gutter: clamp(1rem, 4vw, 4.5rem);
+    --header-h: 76px;
+  }
+
+  * {
+    @apply border-steel;
   }
 
   html {
+    @apply bg-ink text-bone;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
-  body {
-    @apply bg-paper text-ink font-sans;
+  /* Lenis drives scroll; native smooth would fight it. */
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
   }
 
-  h1, h2, h3, h4 {
-    @apply font-display uppercase;
-    letter-spacing: 0.01em;
+  body {
+    @apply bg-ink text-bone font-sans antialiased;
+    overscroll-behavior-y: none;
   }
 
   ::selection {
-    @apply bg-mauve text-paper;
+    @apply bg-signal text-bone;
+  }
+
+  /* Focus rings: visible and square, never a soft blue halo. */
+  :focus-visible {
+    outline: 2px solid theme('colors.signal');
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer components {
   .container-site {
-    @apply mx-auto w-full max-w-site px-4 sm:px-6 lg:px-10;
+    width: 100%;
+    max-width: theme('maxWidth.site');
+    margin-inline: auto;
+    padding-inline: var(--gutter);
   }
 
-  .btn-primary {
-    @apply inline-flex items-center justify-center bg-ink px-8 py-4 text-sm font-semibold uppercase tracking-brand text-paper transition-colors hover:bg-mauve;
+  /* ---- Type scale -------------------------------------------------- */
+  /* Display runs condensed + heavy; the wdth axis is what stops it reading
+     like every other Inter-and-a-gradient site. */
+  .t-display {
+    font-variation-settings: 'wdth' 68, 'wght' 900;
+    @apply uppercase tracking-display leading-[0.82];
+    font-size: clamp(3.25rem, 11vw, 12rem);
   }
 
-  .btn-outline {
-    @apply inline-flex items-center justify-center border border-ink px-8 py-4 text-sm font-semibold uppercase tracking-brand text-ink transition-colors hover:bg-ink hover:text-paper;
+  .t-h1 {
+    font-variation-settings: 'wdth' 72, 'wght' 850;
+    @apply uppercase tracking-display leading-[0.86];
+    font-size: clamp(2.5rem, 6.5vw, 6rem);
   }
 
-  .link-underline {
-    @apply relative after:absolute after:-bottom-0.5 after:left-0 after:h-px after:w-0 after:bg-current after:transition-all after:duration-300 hover:after:w-full;
+  .t-h2 {
+    font-variation-settings: 'wdth' 78, 'wght' 800;
+    @apply uppercase tracking-display leading-[0.9];
+    font-size: clamp(1.85rem, 3.6vw, 3.25rem);
+  }
+
+  .t-label {
+    font-variation-settings: 'wdth' 100, 'wght' 600;
+    @apply text-[11px] uppercase tracking-wide text-mist;
+  }
+
+  .t-meta {
+    font-variation-settings: 'wdth' 100, 'wght' 500;
+    @apply text-[12px] uppercase tracking-brand;
+  }
+
+  .t-body {
+    @apply text-[15px] leading-relaxed text-mist;
+  }
+
+  /* ---- Controls ----------------------------------------------------- */
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 px-7 py-4 text-[12px] uppercase tracking-brand transition-all duration-500 ease-cine;
+    font-variation-settings: 'wdth' 100, 'wght' 700;
+  }
+
+  .btn-solid {
+    @apply btn bg-bone text-ink hover:bg-signal hover:text-bone;
+  }
+
+  .btn-ghost {
+    @apply btn border border-steel text-bone hover:border-bone hover:bg-bone hover:text-ink;
+  }
+
+  /* Underline that wipes in from the left rather than fading. */
+  .link-wipe {
+    @apply relative inline-block;
+  }
+  .link-wipe::after {
+    content: '';
+    @apply absolute -bottom-0.5 left-0 h-px w-full origin-right scale-x-0 bg-current transition-transform duration-500 ease-cine;
+  }
+  .link-wipe:hover::after {
+    @apply origin-left scale-x-100;
+  }
+
+  .rule {
+    @apply h-px w-full bg-steel;
+  }
+
+  /* Edge-to-edge film grain. Sits above imagery, below content. */
+  .grain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.16;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 }
 
-/* Hide scrollbar for horizontal scrollers */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+@layer utilities {
+
+  .edge-fade-b {
+    mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+}

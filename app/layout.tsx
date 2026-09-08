@@ -1,25 +1,23 @@
 import type { Metadata } from 'next';
-import { Oswald, Inter } from 'next/font/google';
+import { Archivo } from 'next/font/google';
 import './globals.css';
 import { getMenu } from '@/lib/shopify';
+import { BRAND } from '@/lib/brand';
 import { CartProvider } from '@/components/cart/cart-context';
 import CartDrawer from '@/components/cart/cart-drawer';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
-import Marquee from '@/components/layout/marquee';
-import LeadPopup from '@/components/popup/lead-popup';
+import SmoothScroll from '@/components/motion/smooth-scroll';
 
-const display = Oswald({
+/**
+ * One family, two axes. The width axis is what lets the display type go
+ * genuinely condensed and heavy while the UI stays a normal grotesk — it is
+ * the difference between a considered typographic system and Inter-plus-Anton.
+ */
+const archivo = Archivo({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-display',
-  display: 'swap',
-});
-
-const body = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-body',
+  axes: ['wdth'],
+  variable: '--font-archivo',
   display: 'swap',
 });
 
@@ -31,33 +29,45 @@ export const metadata: Metadata = {
     default: 'GDC Clothing — Money Oriented. Grind Focused.',
     template: '%s · GDC Clothing',
   },
-  description:
-    'GDC Clothing — premium streetwear for the money oriented. Graphic tees, tracksuits and accessories built for the grind.',
+  description: BRAND.description,
   openGraph: {
     title: 'GDC Clothing',
-    description: 'Premium streetwear built for the grind.',
+    description: BRAND.description,
     type: 'website',
     url: siteUrl,
+    siteName: BRAND.name,
   },
+  twitter: { card: 'summary_large_image', title: 'GDC Clothing', description: BRAND.description },
 };
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export const viewport = {
+  themeColor: '#08080A',
+  colorScheme: 'dark',
+};
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const menu = await getMenu('main-menu');
 
   return (
-    <html lang="en" className={`${display.variable} ${body.variable}`}>
-      <body className="min-h-screen">
+    <html lang="en" className={archivo.variable}>
+      <head>
+        {/* The hero film is the LCP element — start the connection early. */}
+        <link rel="preconnect" href="https://gdconline.myshopify.com" />
+        <link rel="preconnect" href="https://cdn.shopify.com" />
+      </head>
+      <body className="min-h-screen bg-ink text-bone">
+        <SmoothScroll />
         <CartProvider>
-          <Marquee />
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-bone focus:px-4 focus:py-2 focus:text-ink"
+          >
+            Skip to content
+          </a>
           <Header menu={menu} />
-          <main>{children}</main>
+          <main id="main">{children}</main>
           <Footer menu={menu} />
           <CartDrawer />
-          <LeadPopup />
         </CartProvider>
       </body>
     </html>

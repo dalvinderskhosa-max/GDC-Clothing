@@ -45,7 +45,7 @@ export default async function GenericPage({
         <section className="container-site py-12">
           <div className="columns-2 gap-4 md:columns-3 [&>*]:mb-4">
             {images.map((url) => (
-              <div key={url} className="relative overflow-hidden bg-cream">
+              <div key={url} className="relative overflow-hidden bg-carbon">
                 <Image
                   src={url}
                   alt=""
@@ -70,14 +70,14 @@ export default async function GenericPage({
       <section className="container-site py-12 lg:py-16">
         {page?.body ? (
           <div
-            className="prose prose-neutral mx-auto max-w-3xl [&_a]:text-mauve [&_a]:underline [&_h2]:font-display [&_h2]:uppercase"
+            className="prose prose-neutral mx-auto max-w-3xl [&_a]:text-signal [&_a]:underline [&_h2]:[&_h2]:uppercase"
             dangerouslySetInnerHTML={{ __html: page.body }}
           />
         ) : (
-          <div className="mx-auto max-w-2xl text-center text-smoke">
+          <div className="mx-auto max-w-2xl text-center text-mist">
             <p className="text-sm">
               This page is being written. In the meantime, reach us at{' '}
-              <a href="mailto:hello@gdcclothing.com" className="text-mauve underline">
+              <a href="mailto:hello@gdcclothing.com" className="text-signal underline">
                 hello@gdcclothing.com
               </a>
               .
@@ -91,14 +91,14 @@ export default async function GenericPage({
 
 function PageHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <section className="border-b border-ink/10 bg-cream">
+    <section className="border-b border-steel bg-carbon">
       <div className="container-site py-14 text-center lg:py-20">
         {subtitle && (
-          <p className="mb-3 text-xs font-semibold uppercase tracking-brand text-mauve">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-brand text-signal">
             {subtitle}
           </p>
         )}
-        <h1 className="font-display text-5xl uppercase tracking-brand sm:text-6xl">
+        <h1 className="text-5xl uppercase tracking-brand sm:text-6xl">
           {title}
         </h1>
       </div>

@@ -18,12 +18,12 @@ export default async function BlogPage({
 
   return (
     <div>
-      <section className="border-b border-ink/10 bg-cream">
+      <section className="border-b border-steel bg-carbon">
         <div className="container-site py-14 text-center lg:py-20">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-brand text-mauve">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-brand text-signal">
             Journal
           </p>
-          <h1 className="font-display text-5xl uppercase tracking-brand sm:text-6xl">
+          <h1 className="text-5xl uppercase tracking-brand sm:text-6xl">
             The Grind
           </h1>
         </div>
@@ -31,8 +31,8 @@ export default async function BlogPage({
 
       <section className="container-site py-12 lg:py-16">
         {articles.length === 0 ? (
-          <div className="py-20 text-center text-smoke">
-            <p className="font-display text-3xl uppercase tracking-brand text-ink">
+          <div className="py-20 text-center text-mist">
+            <p className="text-3xl uppercase tracking-brand text-bone">
               Stories coming soon
             </p>
             <p className="mt-3 text-sm">The come-up is being documented. Check back shortly.</p>
@@ -41,7 +41,7 @@ export default async function BlogPage({
           <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
             {articles.map((article) => (
               <article key={article.handle} className="group">
-                <div className="relative aspect-[4/3] overflow-hidden bg-cream">
+                <div className="relative aspect-[4/3] overflow-hidden bg-carbon">
                   {article.image && (
                     <Image
                       src={article.image.url}
@@ -52,10 +52,10 @@ export default async function BlogPage({
                     />
                   )}
                 </div>
-                <h2 className="mt-4 font-display text-2xl uppercase tracking-brand">
+                <h2 className="mt-4 text-2xl uppercase tracking-brand">
                   {article.title}
                 </h2>
-                <p className="mt-2 text-sm text-smoke line-clamp-3">{article.excerpt}</p>
+                <p className="mt-2 text-sm text-mist line-clamp-3">{article.excerpt}</p>
               </article>
             ))}
           </div>

@@ -5,6 +5,13 @@ import { useState } from 'react';
 import type { Image as ShopImage } from '@/lib/shopify/types';
 import { cn } from '@/lib/utils';
 
+const GRADE = 'brightness(0.86) contrast(1.12) saturate(0.86)';
+
+/**
+ * Stacked on desktop rather than a thumbnail carousel — with this few images
+ * per piece, letting the visitor scroll full-height frames reads far better
+ * than a postage-stamp strip. Mobile keeps a swipeable rail.
+ */
 export default function ProductGallery({
   images,
   title,
@@ -13,50 +20,70 @@ export default function ProductGallery({
   title: string;
 }) {
   const [active, setActive] = useState(0);
-  const gallery = images.length ? images : [];
 
-  if (!gallery.length) {
-    return <div className="aspect-[3/4] w-full bg-cream" />;
+  if (!images.length) {
+    return <div className="aspect-[3/4] w-full bg-carbon" />;
   }
 
   return (
-    <div className="flex flex-col-reverse gap-4 lg:flex-row">
-      {/* Thumbnails */}
-      {gallery.length > 1 && (
-        <div className="flex gap-3 overflow-x-auto lg:w-20 lg:flex-col">
-          {gallery.map((img, i) => (
-            <button
+    <>
+      {/* Desktop: a continuous column of full frames. */}
+      <div className="hidden flex-col gap-2 lg:flex">
+        {images.map((img, i) => (
+          <div key={img.url} className="relative aspect-[4/5] w-full overflow-hidden bg-carbon">
+            <Image
+              src={img.url}
+              alt={img.altText || `${title} — view ${i + 1}`}
+              fill
+              priority={i === 0}
+              sizes="(min-width:1024px) 58vw, 100vw"
+              className="object-cover"
+              style={{ filter: GRADE }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Mobile: swipe rail with a position readout. */}
+      <div className="lg:hidden">
+        <div
+          className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto"
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            setActive(Math.round(el.scrollLeft / el.clientWidth));
+          }}
+        >
+          {images.map((img, i) => (
+            <div
               key={img.url}
-              onClick={() => setActive(i)}
-              className={cn(
-                'relative aspect-[3/4] w-16 flex-shrink-0 overflow-hidden bg-cream lg:w-full',
-                active === i ? 'ring-2 ring-ink' : 'opacity-70 hover:opacity-100',
-              )}
-              aria-label={`View image ${i + 1}`}
+              className="relative aspect-[4/5] w-full flex-none snap-center bg-carbon"
             >
               <Image
                 src={img.url}
-                alt=""
+                alt={img.altText || `${title} — view ${i + 1}`}
                 fill
-                sizes="80px"
+                priority={i === 0}
+                sizes="100vw"
                 className="object-cover"
+                style={{ filter: GRADE }}
               />
-            </button>
+            </div>
           ))}
         </div>
-      )}
-
-      {/* Main image */}
-      <div className="relative aspect-[3/4] flex-1 overflow-hidden bg-cream">
-        <Image
-          src={gallery[active].url}
-          alt={gallery[active].altText || title}
-          fill
-          priority
-          sizes="(min-width: 1024px) 50vw, 100vw"
-          className="object-cover"
-        />
+        {images.length > 1 && (
+          <div className="mt-3 flex items-center gap-2 px-[var(--gutter)]">
+            {images.map((img, i) => (
+              <span
+                key={img.url}
+                className={cn(
+                  'h-px flex-1 transition-colors duration-300',
+                  i === active ? 'bg-bone' : 'bg-steel',
+                )}
+              />
+            ))}
+          </div>
+        )}
       </div>
-    </div>
+    </>
   );
 }

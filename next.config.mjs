@@ -3,17 +3,11 @@ const nextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'cdn.shopify.com',
-        pathname: '/**',
-      },
+      { protocol: 'https', hostname: 'cdn.shopify.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'gdconline.myshopify.com', pathname: '/**' },
     ],
   },
-  eslint: {
-    // Don't block Netlify builds on lint; we lint separately.
-    ignoreDuringBuilds: true,
-  },
+  eslint: { ignoreDuringBuilds: true },
 };
 
 export default nextConfig;

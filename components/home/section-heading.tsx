@@ -12,22 +12,13 @@ export default function SectionHeading({
   linkLabel?: string;
 }) {
   return (
-    <div className="mb-8 flex items-end justify-between gap-4">
+    <div className="mb-10 flex items-end justify-between gap-6 border-b border-steel pb-5">
       <div>
-        {eyebrow && (
-          <p className="mb-2 text-xs font-semibold uppercase tracking-brand text-mauve">
-            {eyebrow}
-          </p>
-        )}
-        <h2 className="font-display text-4xl uppercase tracking-brand sm:text-5xl">
-          {title}
-        </h2>
+        {eyebrow && <p className="t-label mb-3">{eyebrow}</p>}
+        <h2 className="t-h2 text-bone">{title}</h2>
       </div>
       {href && (
-        <Link
-          href={href}
-          className="link-underline hidden whitespace-nowrap text-xs font-semibold uppercase tracking-brand sm:block"
-        >
+        <Link href={href} className="link-wipe t-meta shrink-0 pb-1 text-mist hover:text-bone">
           {linkLabel}
         </Link>
       )}

@@ -1,22 +1,26 @@
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getCollection, getCollectionProducts } from '@/lib/shopify';
+import { notFound } from 'next/navigation';
+import { getCollection, getCollectionProducts, getProducts } from '@/lib/shopify';
+import { curate } from '@/lib/brand';
 import ProductGrid from '@/components/product/product-grid';
+import { RevealText, Reveal } from '@/components/motion/reveal';
 
-export const revalidate = 3600;
+export const revalidate = 1800;
+
+/** shop-all is a virtual collection: everything, in merchandised order. */
+const ALL = 'shop-all';
 
 export async function generateMetadata({
   params,
 }: {
   params: { handle: string };
 }): Promise<Metadata> {
+  if (params.handle === ALL) return { title: 'Shop all' };
   const collection = await getCollection(params.handle);
-  if (!collection) return { title: 'Collection' };
+  if (!collection) return { title: 'Not found' };
   return {
     title: collection.title,
-    description:
-      collection.description ||
-      `Shop the ${collection.title} collection at GDC Clothing.`,
+    description: collection.description?.slice(0, 160) || undefined,
   };
 }
 
@@ -25,50 +29,40 @@ export default async function CollectionPage({
 }: {
   params: { handle: string };
 }) {
+  const isAll = params.handle === ALL;
+
   const [collection, products] = await Promise.all([
-    getCollection(params.handle),
-    getCollectionProducts(params.handle),
+    isAll ? Promise.resolve(null) : getCollection(params.handle),
+    isAll ? getProducts(100, 'BEST_SELLING') : getCollectionProducts(params.handle, 100),
   ]);
 
-  if (!collection) notFound();
+  if (!isAll && !collection) notFound();
+
+  const items = curate(products);
+  const title = isAll ? 'Shop all' : collection!.title;
+
+  // Shopify strips newlines out of the plain-text description, so long copy
+  // arrives as one run-on block. Keep the opening and let the piece pages carry
+  // the detail rather than dumping the whole thing at the top of a grid.
+  const blurb = (isAll ? '' : collection!.description || '').trim();
+  const intro = blurb.length > 190 ? `${blurb.slice(0, 190).trimEnd()}…` : blurb;
 
   return (
-    <div>
-      {/* Collection header */}
-      <section className="border-b border-ink/10 bg-cream">
-        <div className="container-site py-14 text-center lg:py-20">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-brand text-mauve">
-            Collection
-          </p>
-          <h1 className="font-display text-5xl uppercase tracking-brand sm:text-6xl lg:text-7xl">
-            {collection.title}
-          </h1>
-          {collection.description && (
-            <p className="mx-auto mt-4 max-w-2xl text-sm text-smoke">
-              {collection.description}
-            </p>
-          )}
-        </div>
-      </section>
+    <div className="pt-[var(--header-h)]">
+      <header className="container-site border-b border-steel py-[clamp(2.5rem,7vh,5rem)]">
+        <p className="t-label mb-5">Collection</p>
+        <RevealText as="h1" text={title} className="t-h1 block text-bone" />
+        {intro && <p className="t-body mt-7 max-w-xl">{intro}</p>}
+        <p className="t-label mt-8 tabular-nums">
+          {items.length} {items.length === 1 ? 'piece' : 'pieces'}
+        </p>
+      </header>
 
-      <section className="container-site py-12 lg:py-16">
-        <div className="mb-8 flex items-center justify-between">
-          <span className="text-xs uppercase tracking-brand text-smoke">
-            {products.length} {products.length === 1 ? 'item' : 'items'}
-          </span>
-        </div>
-
-        {products.length === 0 ? (
-          <div className="py-24 text-center">
-            <p className="font-display text-3xl uppercase tracking-brand">
-              Dropping soon
-            </p>
-            <p className="mt-3 text-sm text-smoke">
-              This collection is being restocked. Join the list to know first.
-            </p>
-          </div>
+      <section className="container-site py-[clamp(2.5rem,7vh,5rem)]">
+        {items.length ? (
+          <ProductGrid products={items} priorityCount={4} />
         ) : (
-          <ProductGrid products={products} priorityCount={4} />
+          <p className="t-body py-20 text-center">Nothing in this collection yet.</p>
         )}
       </section>
     </div>

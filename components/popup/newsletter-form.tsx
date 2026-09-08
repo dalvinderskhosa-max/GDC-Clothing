@@ -52,8 +52,8 @@ export default function NewsletterForm({
     return (
       <p
         className={cn(
-          'font-display text-xl uppercase tracking-brand',
-          dark ? 'text-paper' : 'text-ink',
+          'text-xl uppercase tracking-brand',
+          dark ? 'text-ink' : 'text-bone',
         )}
       >
         ✓ {message}
@@ -64,8 +64,8 @@ export default function NewsletterForm({
   const inputBase = cn(
     'w-full border px-4 py-3 text-sm outline-none transition-colors placeholder:uppercase placeholder:tracking-brand placeholder:text-current/50',
     dark
-      ? 'border-white/25 bg-transparent text-paper focus:border-paper'
-      : 'border-ink/25 bg-transparent text-ink focus:border-ink',
+      ? 'border-white/25 bg-transparent text-ink focus:border-steel'
+      : 'border-steel bg-transparent text-bone focus:border-bone',
   );
 
   return (
@@ -97,17 +97,17 @@ export default function NewsletterForm({
             'whitespace-nowrap px-8 py-3 text-sm font-semibold uppercase tracking-brand transition-colors disabled:opacity-60',
             withPhone ? 'w-full' : 'mt-3 w-full sm:mt-0 sm:w-auto',
             dark
-              ? 'bg-paper text-ink hover:bg-mauve hover:text-paper'
-              : 'bg-ink text-paper hover:bg-mauve',
+              ? 'bg-ink text-bone hover:bg-signal hover:text-ink'
+              : 'bg-bone text-ink hover:bg-signal',
           )}
         >
           {status === 'loading' ? 'Joining…' : 'Sign up'}
         </button>
       </div>
       {status === 'error' && (
-        <p className={cn('text-xs', dark ? 'text-mauve' : 'text-red-700')}>{message}</p>
+        <p className={cn('text-xs', dark ? 'text-signal' : 'text-red-700')}>{message}</p>
       )}
-      <p className={cn('text-[11px]', dark ? 'text-white/40' : 'text-smoke')}>
+      <p className={cn('text-[11px]', dark ? 'text-white/40' : 'text-mist')}>
         By signing up you agree to receive marketing emails{withPhone ? ' and SMS' : ''} from GDC Clothing.
       </p>
     </form>

@@ -22,12 +22,12 @@ export default function CartDrawer() {
       {/* Panel */}
       <aside
         aria-label="Shopping bag"
-        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-paper text-ink shadow-2xl transition-transform duration-300 ${
+        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-ink text-bone shadow-2xl transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <header className="flex items-center justify-between border-b border-ink/10 px-5 py-4">
-          <h2 className="font-display text-xl uppercase tracking-brand">
+        <header className="flex items-center justify-between border-b border-steel px-5 py-4">
+          <h2 className="text-xl uppercase tracking-brand">
             Your Bag {cart?.totalQuantity ? `(${cart.totalQuantity})` : ''}
           </h2>
           <button
@@ -41,24 +41,24 @@ export default function CartDrawer() {
 
         {!cart || cart.lines.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-            <p className="font-display text-2xl uppercase tracking-brand">Your bag is empty</p>
-            <p className="text-sm text-smoke">Time to lock in. The grind doesn&apos;t stop.</p>
+            <p className="text-2xl uppercase tracking-brand">Your bag is empty</p>
+            <p className="text-sm text-mist">Time to lock in. The grind doesn&apos;t stop.</p>
             <button
               onClick={closeCart}
-              className="mt-2 bg-ink px-6 py-3 text-sm font-semibold uppercase tracking-brand text-paper hover:bg-mauve"
+              className="mt-2 bg-bone px-6 py-3 text-sm font-semibold uppercase tracking-brand text-ink hover:bg-signal"
             >
               Continue shopping
             </button>
           </div>
         ) : (
           <>
-            <ul className="flex-1 divide-y divide-ink/10 overflow-y-auto px-5">
+            <ul className="flex-1 divide-y divide-steel overflow-y-auto px-5">
               {cart.lines.map((line) => (
                 <li key={line.id} className="flex gap-4 py-4">
                   <Link
                     href={`/products/${line.merchandise.product.handle}`}
                     onClick={closeCart}
-                    className="relative aspect-[3/4] w-20 flex-shrink-0 overflow-hidden bg-cream"
+                    className="relative aspect-[3/4] w-20 flex-shrink-0 overflow-hidden bg-carbon"
                   >
                     {line.merchandise.product.featuredImage && (
                       <Image
@@ -83,17 +83,17 @@ export default function CartDrawer() {
                       <button
                         onClick={() => removeItem(line.id)}
                         aria-label="Remove item"
-                        className="text-smoke hover:text-ink"
+                        className="text-mist hover:text-bone"
                       >
                         &times;
                       </button>
                     </div>
                     {line.merchandise.title !== 'Default Title' && (
-                      <p className="mt-1 text-xs text-smoke">{line.merchandise.title}</p>
+                      <p className="mt-1 text-xs text-mist">{line.merchandise.title}</p>
                     )}
 
                     <div className="mt-auto flex items-center justify-between pt-3">
-                      <div className="flex items-center border border-ink/20">
+                      <div className="flex items-center border border-steel">
                         <button
                           onClick={() =>
                             updateQuantity(
@@ -102,7 +102,7 @@ export default function CartDrawer() {
                               line.quantity - 1,
                             )
                           }
-                          className="px-2.5 py-1 hover:bg-cream"
+                          className="px-2.5 py-1 hover:bg-ash"
                           aria-label="Decrease quantity"
                         >
                           &minus;
@@ -118,7 +118,7 @@ export default function CartDrawer() {
                               line.quantity + 1,
                             )
                           }
-                          className="px-2.5 py-1 hover:bg-cream"
+                          className="px-2.5 py-1 hover:bg-ash"
                           aria-label="Increase quantity"
                         >
                           +
@@ -133,21 +133,21 @@ export default function CartDrawer() {
               ))}
             </ul>
 
-            <footer className="border-t border-ink/10 px-5 py-5">
-              <div className="mb-1 flex justify-between text-sm text-smoke">
+            <footer className="border-t border-steel px-5 py-5">
+              <div className="mb-1 flex justify-between text-sm text-mist">
                 <span>Subtotal</span>
                 <span>{formatMoney(cart.cost.subtotalAmount)}</span>
               </div>
-              <p className="mb-4 text-xs text-smoke">
+              <p className="mb-4 text-xs text-mist">
                 Shipping &amp; taxes calculated at checkout.
               </p>
               <a
                 href={cart.checkoutUrl}
-                className="block w-full bg-ink py-4 text-center text-sm font-semibold uppercase tracking-brand text-paper transition-colors hover:bg-mauve"
+                className="block w-full bg-bone py-4 text-center text-sm font-semibold uppercase tracking-brand text-ink transition-colors hover:bg-signal"
               >
                 Checkout &middot; {formatMoney(cart.cost.totalAmount)}
               </a>
-              <p className="mt-3 text-center text-[11px] uppercase tracking-brand text-smoke">
+              <p className="mt-3 text-center text-[11px] uppercase tracking-brand text-mist">
                 Secure checkout powered by Shopify
               </p>
             </footer>

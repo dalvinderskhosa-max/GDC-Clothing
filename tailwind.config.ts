@@ -1,46 +1,49 @@
 import type { Config } from 'tailwindcss';
 
+/**
+ * Cinematic dark. Deliberately achromatic — the only colour on the site comes
+ * from product photography and the single signal red, which is reserved for
+ * drop status and stock urgency. Nothing is rounded; every corner is square.
+ */
 const config: Config = {
-  content: [
-    './app/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './lib/**/*.{ts,tsx}',
-  ],
+  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
-        // GDC palette (pulled from the live Fabric theme) + high-contrast base
-        ink: '#050505',
-        paper: '#ffffff',
-        cream: '#EDEBE7',
-        mauve: '#713F50',
-        powder: '#CBDEE8',
-        smoke: '#8A8A8A',
+        void: '#000000',
+        ink: '#08080A',
+        carbon: '#101014',
+        ash: '#17171C',
+        steel: '#2A2A32',
+        smoke: '#6E6E78',
+        mist: '#A8A8B2',
+        bone: '#EDEAE3',
+        signal: '#E8481F',
       },
       fontFamily: {
-        // Condensed, bold display type (Gymking-style); body stays clean
-        display: ['var(--font-display)', 'Arial Narrow', 'sans-serif'],
-        sans: ['var(--font-body)', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        sans: ['var(--font-archivo)', 'system-ui', 'sans-serif'],
       },
       letterSpacing: {
-        brand: '0.08em',
+        display: '-0.04em',
+        brand: '0.18em',
+        wide: '0.32em',
       },
       maxWidth: {
-        site: '1600px',
+        site: '1680px',
+      },
+      transitionTimingFunction: {
+        // Slow out, hard settle. Everything on the site uses one of these two.
+        cine: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        snap: 'cubic-bezier(0.65, 0, 0.35, 1)',
+      },
+      animation: {
+        marquee: 'marquee 40s linear infinite',
       },
       keyframes: {
         marquee: {
-          '0%': { transform: 'translateX(0)' },
-          '100%': { transform: 'translateX(-50%)' },
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(-50%)' },
         },
-        'fade-in': {
-          '0%': { opacity: '0', transform: 'translateY(8px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-      },
-      animation: {
-        marquee: 'marquee 22s linear infinite',
-        'fade-in': 'fade-in 0.4s ease-out both',
       },
     },
   },

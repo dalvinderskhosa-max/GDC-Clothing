@@ -65,7 +65,7 @@ export default function ProductForm({ product }: { product: Product }) {
       <div className="flex items-baseline gap-3">
         <span className="text-2xl font-semibold">{formatMoney(activePrice)}</span>
         {onSale && (
-          <span className="text-lg text-smoke line-through">
+          <span className="text-lg text-mist line-through">
             {formatMoney(compareAt!)}
           </span>
         )}
@@ -78,7 +78,7 @@ export default function ProductForm({ product }: { product: Product }) {
               <span className="text-xs font-semibold uppercase tracking-brand">
                 {option.name}
               </span>
-              <span className="text-xs text-smoke">{selected[option.name]}</span>
+              <span className="text-xs text-mist">{selected[option.name]}</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {option.values.map((value) => {
@@ -93,10 +93,10 @@ export default function ProductForm({ product }: { product: Product }) {
                     className={cn(
                       'min-w-[3rem] border px-4 py-2.5 text-sm font-medium uppercase transition-colors',
                       isSelected
-                        ? 'border-ink bg-ink text-paper'
-                        : 'border-ink/25 hover:border-ink',
+                        ? 'border-bone bg-bone text-ink'
+                        : 'border-steel hover:border-bone',
                       !available &&
-                        'cursor-not-allowed border-ink/10 text-smoke line-through hover:border-ink/10',
+                        'cursor-not-allowed border-steel text-mist line-through hover:border-steel',
                     )}
                     aria-pressed={isSelected}
                   >
@@ -114,8 +114,8 @@ export default function ProductForm({ product }: { product: Product }) {
         className={cn(
           'mt-8 w-full py-4 text-sm font-semibold uppercase tracking-brand transition-colors',
           canBuy
-            ? 'bg-ink text-paper hover:bg-mauve'
-            : 'cursor-not-allowed bg-cream text-smoke',
+            ? 'bg-bone text-ink hover:bg-signal'
+            : 'cursor-not-allowed bg-carbon text-mist',
         )}
       >
         {adding
@@ -129,7 +129,7 @@ export default function ProductForm({ product }: { product: Product }) {
 
       {error && <p className="mt-2 text-xs text-red-700">{error}</p>}
 
-      <p className="mt-4 text-center text-[11px] uppercase tracking-brand text-smoke">
+      <p className="mt-4 text-center text-[11px] uppercase tracking-brand text-mist">
         Free UK shipping over £75 · 30-day returns
       </p>
     </div>

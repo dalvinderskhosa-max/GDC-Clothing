@@ -2,253 +2,191 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getCollectionProducts, getProducts } from '@/lib/shopify';
 import type { Product } from '@/lib/shopify/types';
-import ProductGrid from '@/components/product/product-grid';
-import SectionHeading from '@/components/home/section-heading';
+import { BRAND, FILM, FEATURED, HERO, curate, showable } from '@/lib/brand';
 import { formatMoney } from '@/lib/utils';
+import HeroFilm from '@/components/home/hero-film';
+import SectionHeading from '@/components/home/section-heading';
+import DropExperience from '@/components/home/drop-experience';
+import FilmBreak from '@/components/home/film-break';
+import Ticker from '@/components/home/ticker';
+import { Reveal, RevealText } from '@/components/motion/reveal';
 
 export const revalidate = 1800;
 
-const FEATURED_COLLECTIONS = [
-  { handle: 'graphic-tees', title: 'Graphic Tees', copy: 'Statement pieces' },
-  { handle: 'tracksuits', title: 'Tracksuits', copy: 'Head to toe' },
-  { handle: 'accessories', title: 'Accessories', copy: 'Finish the fit' },
-];
-
-async function firstImageOf(handle: string): Promise<string | null> {
-  const products = await getCollectionProducts(handle, 1);
-  return products[0]?.featuredImage?.url ?? null;
-}
+const GRADE = 'brightness(0.8) contrast(1.16) saturate(0.82)';
 
 export default async function HomePage() {
-  // Pull data with graceful fallbacks so a thin catalogue still looks full.
-  const [newInRaw, allProducts, tileImages] = await Promise.all([
-    getCollectionProducts('new-in', 8),
+  const [dropRaw, allProducts, tiles] = await Promise.all([
+    getCollectionProducts('drop-001', 8),
     getProducts(12, 'BEST_SELLING'),
-    Promise.all(FEATURED_COLLECTIONS.map((c) => firstImageOf(c.handle))),
+    Promise.all(
+      FEATURED.map(async (c) => ({
+        ...c,
+        image: (await getCollectionProducts(c.handle, 1))[0]?.featuredImage?.url ?? null,
+      })),
+    ),
   ]);
 
-  const newIn: Product[] = newInRaw.length ? newInRaw : allProducts;
-  const spotlight = newIn[0] || allProducts[0];
-  const heroImage =
-    spotlight?.images?.[1]?.url ||
-    spotlight?.featuredImage?.url ||
-    tileImages.find(Boolean) ||
-    null;
+  // Merchandised order, not collection order — see lib/brand.ts.
+  const drop: Product[] = curate(dropRaw.length ? dropRaw : allProducts);
+  const sequence = showable(drop);
+  const spotlight = drop.find((p) => p.handle === HERO) ?? sequence[0] ?? drop[0];
+  const spotlightImage = spotlight?.images?.[1]?.url ?? spotlight?.featuredImage?.url ?? null;
 
-  // Build a lookbook from whatever imagery the catalogue has.
-  const lookbookImages = Array.from(
-    new Set(
-      allProducts
-        .flatMap((p) => p.images.map((i) => i.url))
-        .filter(Boolean),
-    ),
-  ).slice(0, 6);
+  const lookbook = Array.from(
+    new Set(allProducts.flatMap((p) => p.images.map((i) => i.url)).filter(Boolean)),
+  ).slice(0, 5);
 
   return (
-    <div>
-      {/* ============================ HERO ============================ */}
-      <section className="relative flex min-h-[82vh] items-end overflow-hidden bg-ink text-paper">
-        {heroImage && (
-          <Image
-            src={heroImage}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-center opacity-70"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-transparent" />
-        <div className="container-site relative z-10 pb-16 lg:pb-24">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-paper/80">
-            Drop 001 — Out now
-          </p>
-          <h1 className="max-w-4xl font-display text-6xl uppercase leading-[0.9] tracking-brand sm:text-7xl lg:text-8xl">
-            Money oriented.
-            <br />
-            Grind focused.
-          </h1>
-          <p className="mt-5 max-w-md text-sm text-paper/70">
-            Premium streetwear for those building something bigger than themselves.
-            Made for the come-up.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/collections/new-in" className="btn-primary bg-paper text-ink hover:bg-mauve hover:text-paper">
-              Shop new in
-            </Link>
-            <Link href="/collections/drop-001" className="btn-outline border-paper text-paper hover:bg-paper hover:text-ink">
-              Explore Drop 001
-            </Link>
-          </div>
-        </div>
-      </section>
+    <>
+      <HeroFilm />
 
-      {/* ========================= TRUST STRIP ======================= */}
-      <section className="border-b border-ink/10 bg-cream">
-        <div className="container-site grid grid-cols-2 divide-x divide-ink/10 text-center md:grid-cols-4">
-          {[
-            ['Free UK Shipping', 'On orders over £75'],
-            ['30-Day Returns', 'Hassle-free'],
-            ['Secure Checkout', 'Powered by Shopify'],
-            ['Premium Quality', 'Built to last'],
-          ].map(([t, s]) => (
-            <div key={t} className="px-3 py-6">
-              <p className="text-xs font-bold uppercase tracking-brand">{t}</p>
-              <p className="mt-1 text-[11px] text-smoke">{s}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      <Ticker
+        items={[BRAND.tagline.join(' '), 'Drop 001 out now', 'Designed in the UK', 'Free UK shipping over £75']}
+      />
 
-      {/* ======================= CATEGORY TILES ====================== */}
-      <section className="container-site py-16 lg:py-24">
-        <SectionHeading eyebrow="Shop by category" title="Find your fit" />
-        <div className="grid gap-4 md:grid-cols-3">
-          {FEATURED_COLLECTIONS.map((c, i) => (
-            <Link
-              key={c.handle}
-              href={`/collections/${c.handle}`}
-              className="group relative aspect-[4/5] overflow-hidden bg-cream"
-            >
-              {tileImages[i] && (
-                <Image
-                  src={tileImages[i]!}
-                  alt={c.title}
-                  fill
-                  sizes="(min-width: 768px) 33vw, 100vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent" />
-              <div className="absolute bottom-0 left-0 p-6 text-paper">
-                <p className="text-xs uppercase tracking-brand text-paper/70">{c.copy}</p>
-                <h3 className="font-display text-3xl uppercase tracking-brand">{c.title}</h3>
-                <span className="link-underline mt-2 inline-block text-xs font-semibold uppercase tracking-brand">
-                  Shop now
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ===================== SPOTLIGHT PRODUCT ===================== */}
+      {/* ---------------------------- SPOTLIGHT ---------------------------- */}
       {spotlight && (
-        <section className="bg-ink text-paper">
-          <div className="container-site grid items-stretch gap-0 lg:grid-cols-2">
-            <div className="relative aspect-square lg:aspect-auto lg:min-h-[600px]">
-              {spotlight.featuredImage && (
+        <section className="border-b border-steel">
+          <div className="grid lg:grid-cols-[1.1fr_1fr]">
+            <Reveal className="relative aspect-[4/5] overflow-hidden bg-carbon lg:aspect-auto lg:min-h-[86vh]" y={0}>
+              {spotlightImage && (
                 <Image
-                  src={spotlight.featuredImage.url}
+                  src={spotlightImage}
                   alt={spotlight.title}
                   fill
-                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  sizes="(min-width:1024px) 55vw, 100vw"
                   className="object-cover"
+                  style={{ filter: GRADE }}
                 />
               )}
-            </div>
-            <div className="flex flex-col justify-center px-6 py-16 lg:px-16">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-brand text-mauve">
-                Featured
-              </p>
-              <h2 className="font-display text-5xl uppercase leading-none tracking-brand lg:text-6xl">
-                {spotlight.title}
-              </h2>
-              <p className="mt-4 max-w-md text-sm text-paper/70 line-clamp-4">
-                {spotlight.description || 'A GDC staple. Cut heavy, built to last, worn by the movement.'}
-              </p>
-              <p className="mt-6 text-2xl font-semibold">
-                {formatMoney(spotlight.priceRange.minVariantPrice)}
-              </p>
-              <div className="mt-8">
-                <Link
-                  href={`/products/${spotlight.handle}`}
-                  className="btn-primary bg-paper text-ink hover:bg-mauve hover:text-paper"
-                >
-                  Shop this piece
-                </Link>
-              </div>
+              <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-ink/40 via-transparent to-ink/30" />
+            </Reveal>
+
+            <div className="flex flex-col justify-center px-[var(--gutter)] py-20 lg:py-0">
+              <p className="t-label mb-5">The piece</p>
+              <RevealText
+                as="h2"
+                text={spotlight.title}
+                className="t-h1 block text-bone"
+              />
+              <Reveal delay={0.15}>
+                <p className="t-body mt-7 max-w-sm">
+                  {spotlight.description?.slice(0, 220) ||
+                    'A GDC staple. Cut heavy, built to last, worn by the movement.'}
+                </p>
+                <p className="mt-8 text-2xl tabular-nums text-bone">
+                  {formatMoney(spotlight.priceRange.minVariantPrice)}
+                </p>
+                <div className="mt-9">
+                  <Link href={`/products/${spotlight.handle}`} className="btn-solid">
+                    Shop this piece
+                  </Link>
+                </div>
+              </Reveal>
             </div>
           </div>
         </section>
       )}
 
-      {/* ========================== NEW IN =========================== */}
-      <section className="container-site py-16 lg:py-24">
-        <SectionHeading
-          eyebrow="Fresh drops"
-          title="New in"
-          href="/collections/new-in"
-        />
-        <ProductGrid products={newIn.slice(0, 8)} priorityCount={0} />
+      {/* ---- DROP: the collection as a scroll-driven dolly shot ---- */}
+      <DropExperience products={sequence} />
+
+      {/* --------------------------- FILM BREAK ---------------------------- */}
+      <FilmBreak
+        src={FILM.secondary.src}
+        heading="Built for the come-up"
+        body="Every piece is a reminder of what you're working towards. Designed in the UK, made for the movement."
+      />
+
+      {/* --------------------------- COLLECTIONS --------------------------- */}
+      <section className="container-site py-[clamp(4rem,10vh,8rem)]">
+        <SectionHeading eyebrow="Shop by category" title="Find your fit" />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {tiles.map((c, i) => (
+            <Reveal key={c.handle} delay={i * 0.07}>
+              <Link
+                href={`/collections/${c.handle}`}
+                className="group relative block aspect-[3/4] overflow-hidden bg-carbon"
+              >
+                {c.image && (
+                  <Image
+                    src={c.image}
+                    alt={c.title}
+                    fill
+                    sizes="(min-width:1024px) 25vw, (min-width:640px) 50vw, 100vw"
+                    className="object-cover transition-transform duration-[1100ms] ease-cine group-hover:scale-[1.06]"
+                    style={{ filter: GRADE }}
+                  />
+                )}
+                <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink via-ink/25 to-transparent" />
+                <span className="absolute inset-x-0 bottom-0 p-5">
+                  <span className="t-label block">{c.label}</span>
+                  <span
+                    className="mt-1.5 block text-[19px] uppercase leading-none text-bone"
+                    style={{ fontVariationSettings: "'wdth' 80, 'wght' 800", letterSpacing: '-0.01em' }}
+                  >
+                    {c.title}
+                  </span>
+                </span>
+              </Link>
+            </Reveal>
+          ))}
+        </div>
       </section>
 
-      {/* ========================= LOOKBOOK ========================== */}
-      {lookbookImages.length >= 3 && (
-        <section className="bg-cream py-16 lg:py-24">
+      {/* ---------------------------- LOOKBOOK ----------------------------- */}
+      {lookbook.length >= 4 && (
+        <section className="border-y border-steel bg-carbon py-[clamp(4rem,10vh,8rem)]">
           <div className="container-site">
-            <SectionHeading
-              eyebrow="The Lookbook"
-              title="Worn by the movement"
-              href="/pages/lookbook"
-              linkLabel="Full lookbook"
-            />
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:gap-4">
-              {lookbookImages.map((url, i) => (
-                <div
+            <SectionHeading eyebrow="The lookbook" title="Worn by the movement" href="/pages/lookbook" linkLabel="Full lookbook" />
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {lookbook.slice(0, 4).map((url, i) => (
+                <Reveal
                   key={url}
-                  className={`relative overflow-hidden bg-paper ${
-                    i === 0 ? 'col-span-2 row-span-2 aspect-square md:col-span-1' : 'aspect-[3/4]'
-                  }`}
+                  delay={i * 0.08}
+                  className={i % 3 === 0 ? 'lg:mt-12' : ''}
                 >
-                  <Image
-                    src={url}
-                    alt=""
-                    fill
-                    sizes="(min-width: 768px) 33vw, 50vw"
-                    className="object-cover transition-transform duration-700 hover:scale-105"
-                  />
-                </div>
+                  <div className="relative aspect-[3/4] overflow-hidden bg-ink">
+                    <Image
+                      src={url}
+                      alt=""
+                      fill
+                      sizes="(min-width:1024px) 25vw, 50vw"
+                      className="object-cover transition-transform duration-[1100ms] ease-cine hover:scale-[1.05]"
+                      style={{ filter: GRADE }}
+                    />
+                  </div>
+                </Reveal>
               ))}
             </div>
           </div>
         </section>
       )}
 
-      {/* ======================== BRAND STORY ======================== */}
-      <section className="container-site grid items-center gap-10 py-20 lg:grid-cols-2 lg:gap-16">
-        <div className="relative aspect-[4/5] overflow-hidden bg-cream">
-          {(lookbookImages[1] || heroImage) && (
-            <Image
-              src={lookbookImages[1] || heroImage!}
-              alt="GDC Clothing"
-              fill
-              sizes="(min-width: 1024px) 50vw, 100vw"
-              className="object-cover"
-            />
-          )}
-        </div>
-        <div>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-brand text-mauve">
-            The Grind
-          </p>
-          <h2 className="font-display text-5xl uppercase leading-none tracking-brand lg:text-6xl">
-            More than clothing.
-            <br />
-            It&apos;s a mindset.
-          </h2>
-          <p className="mt-6 max-w-md text-sm leading-relaxed text-ink/70">
-            GDC was built for the ones who don&apos;t stop. Every piece is a reminder of
-            what you&apos;re working towards — designed in the UK, made for the movement.
-            Money oriented, grind focused, no shortcuts.
-          </p>
-          <div className="mt-8">
-            <Link href="/pages/about-us" className="btn-outline">
-              Our story
-            </Link>
-          </div>
+      {/* --------------------------- BRAND STORY --------------------------- */}
+      <section className="container-site py-[clamp(5rem,14vh,10rem)]">
+        <div className="max-w-4xl">
+          <p className="t-label mb-6">The grind</p>
+          <RevealText
+            as="h2"
+            text="More than clothing. It's a mindset."
+            className="t-h1 block text-bone"
+          />
+          <Reveal delay={0.2}>
+            <p className="t-body mt-8 max-w-xl">
+              GDC was built for the ones who don&apos;t stop. Money oriented, grind focused,
+              no shortcuts — designed in the UK and made for everyone building something
+              bigger than themselves.
+            </p>
+            <div className="mt-10">
+              <Link href="/pages/about-us" className="btn-ghost">
+                Our story
+              </Link>
+            </div>
+          </Reveal>
         </div>
       </section>
-    </div>
+    </>
   );
 }
