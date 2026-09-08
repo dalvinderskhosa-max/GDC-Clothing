@@ -31,26 +31,28 @@ export function cn(...inputs: ClassValue[]): string {
 export function cleanShopifyHtml(html: string): string {
   return (
     html
-      // Page bodies ship an entire embedded stylesheet — its own palette, font
-      // stack and centred layout — plus :root overrides that leak site-wide.
-      // With the class attributes stripped below, that CSS matches nothing
-      // anyway; left in place it only pollutes the cascade.
+      // Strip the embedded stylesheet and its :root overrides, which otherwise
+      // leak site-wide, and any scripts.
       .replace(/<style[\s\S]*?<\/style>/gi, '')
       .replace(/<script[\s\S]*?<\/script>/gi, '')
       // The page header already renders the title, so a body h1 duplicates it.
       .replace(/<h1[^>]*>[\s\S]*?<\/h1>/i, '')
-      .replace(/\s(?:style|class|align|bgcolor|width|height)="[^"]*"/gi, '')
-      .replace(/\s(?:style|class|align|bgcolor|width|height)='[^']*'/gi, '')
+      // Inline styles carry the old palette and font stack — those go. Class
+      // names stay: they are the only record of the author's structure
+      // (pillars, steps, eyebrows, cards), and app/globals.css restyles those
+      // patterns in this design system. Stripping them flattened every page
+      // into an undifferentiated wall of text.
+      .replace(/\s(?:style|align|bgcolor|width|height)="[^"]*"/gi, '')
+      .replace(/\s(?:style|align|bgcolor|width|height)='[^']*'/gi, '')
       .replace(/<font[^>]*>/gi, '')
       .replace(/<\/font>/gi, '')
-      // Empty wrappers left behind once their styling is gone.
-      .replace(/<(div|span)>\s*<\/\1>/gi, '')
       .trim()
   );
 }
 
 /** Shared prose styling for merchant-authored HTML. */
 export const PROSE = [
+  'shopify-content',
   'max-w-2xl text-[15px] leading-relaxed text-mist',
   // First paragraph reads as a standfirst rather than body copy.
   '[&>p:first-of-type]:text-[clamp(1.05rem,1.9vw,1.35rem)] [&>p:first-of-type]:leading-[1.55] [&>p:first-of-type]:text-bone [&>p:first-of-type]:mb-8',

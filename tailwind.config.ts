@@ -6,7 +6,14 @@ import type { Config } from 'tailwindcss';
  * drop status and stock urgency. Nothing is rounded; every corner is square.
  */
 const config: Config = {
-  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
+  // lib/ was missing, so every class in the PROSE constant in lib/utils.ts was
+  // purged — merchant page bodies rendered with no heading or list styling at
+  // all. Any file that composes class strings has to be scanned.
+  content: [
+    './app/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './lib/**/*.{ts,tsx}',
+  ],
   theme: {
     extend: {
       colors: {

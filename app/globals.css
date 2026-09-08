@@ -151,3 +151,224 @@
     scrollbar-width: none;
   }
 }
+
+
+/* NOTE: deliberately not inside @layer components. Tailwind tree-shakes rules
+   in that layer against the source files, and every selector below targets a
+   class that only ever appears in HTML fetched from Shopify at runtime — so
+   they were being stripped from the build entirely. */
+/* ===================================================================
+   Merchant-authored page bodies.
+
+   Each Shopify page ships its own bespoke class system — about-us has
+   .gdc-pillar, rewards has .gdc-tier, reviews has .gdc-review-card, and so on
+   across ~19 pages and several hundred class names. Their stylesheet is
+   stripped on the way in (wrong palette, wrong font, leaks :root), but the
+   class names are kept because they are the only record of the author's
+   structure.
+
+   Rather than hand-write CSS per page, these rules match on the *patterns* the
+   naming repeats: containers of things, cells, eyebrows, numerals, dividers.
+   Everything is scoped to .shopify-content so it cannot escape into the app.
+   =================================================================== */
+  .shopify-content {
+    max-width: none;
+  }
+
+  /* --- Containers of repeated things become grids --- */
+  .shopify-content [class*='pillars'],
+  .shopify-content [class*='perks'],
+  .shopify-content [class*='tiers'],
+  .shopify-content [class*='steps'],
+  .shopify-content [class*='stats'],
+  .shopify-content [class*='cards'],
+  .shopify-content [class*='-grid'] {
+    display: grid;
+    gap: 1px;
+    margin: 2.5rem 0;
+    background: theme('colors.steel');
+    border: 1px solid theme('colors.steel');
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  }
+
+  /* --- Individual cells --- */
+  .shopify-content [class*='pillar'],
+  .shopify-content [class*='perk'],
+  .shopify-content [class*='tier'],
+  .shopify-content [class*='step-card'],
+  .shopify-content [class*='step-item'],
+  .shopify-content [class*='-step'],
+  .shopify-content [class*='faq-item'],
+  .shopify-content [class*='review-card'],
+  .shopify-content [class*='trust-stat'],
+  .shopify-content [class*='-asset'],
+  .shopify-content [class*='-drop'] {
+    background: theme('colors.ink');
+    padding: 1.75rem;
+    margin: 0;
+  }
+
+  /* A cell's first short child reads as its title. */
+  .shopify-content [class*='pillar'] > span:first-child,
+  .shopify-content [class*='perk'] > span:first-child,
+  .shopify-content [class*='tier'] > span:first-child,
+  .shopify-content [class*='-step'] > span:first-child,
+  .shopify-content [class*='faq-item'] > span:first-child,
+  .shopify-content [class*='pillar'] > strong:first-child,
+  .shopify-content [class*='faq-item'] > strong:first-child {
+    display: block;
+    margin-bottom: 0.65rem;
+    color: theme('colors.bone');
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    font-size: 1.05rem;
+    font-variation-settings: 'wdth' 86, 'wght' 780;
+  }
+
+  .shopify-content [class*='pillar'] p,
+  .shopify-content [class*='perk'] p,
+  .shopify-content [class*='tier'] p,
+  .shopify-content [class*='-step'] p,
+  .shopify-content [class*='faq-item'] p {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  /* --- Small caps labels --- */
+  .shopify-content [class*='eyebrow'],
+  .shopify-content [class~='label'],
+  .shopify-content [class*='section-label'],
+  .shopify-content [class~='subtitle'],
+  .shopify-content [class~='tag'] {
+    display: block;
+    margin-bottom: 0.9rem;
+    color: theme('colors.mist');
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    font-variation-settings: 'wdth' 100, 'wght' 600;
+  }
+
+  .shopify-content [class~='tag'] {
+    display: inline-block;
+    margin: 0 0.4rem 0.4rem 0;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid theme('colors.steel');
+    letter-spacing: 0.22em;
+  }
+
+  /* --- Numerals: step counters and stats carry the weight --- */
+  .shopify-content [class~='num'],
+  .shopify-content [class*='step-num'],
+  .shopify-content [class*='hw-num'],
+  .shopify-content [class*='stat-num'] {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: theme('colors.signal');
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    line-height: 1;
+    font-variation-settings: 'wdth' 74, 'wght' 860;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* --- Section titles authored as spans/divs --- */
+  .shopify-content [class*='section-title'] {
+    display: block;
+    margin: 0 0 1rem;
+    color: theme('colors.bone');
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.03em;
+    font-variation-settings: 'wdth' 78, 'wght' 820;
+  }
+
+  /* --- Accent, rules, standfirst --- */
+  .shopify-content .gold,
+  .shopify-content [class~='accent'] {
+    color: theme('colors.signal');
+  }
+
+  .shopify-content [class~='divider'] {
+    height: 1px;
+    margin: 2.5rem 0;
+    border: 0;
+    background: theme('colors.steel');
+  }
+
+  .shopify-content [class~='lead'] {
+    max-width: 40rem;
+    color: theme('colors.bone');
+    font-size: clamp(1.05rem, 1.9vw, 1.35rem);
+    line-height: 1.55;
+  }
+
+  /* --- Sections and split layouts --- */
+  .shopify-content [class*='-section'] {
+    margin: 3rem 0;
+  }
+
+  .shopify-content [class*='-split'] {
+    display: grid;
+    gap: 2.5rem;
+    margin: 3rem 0;
+  }
+
+  @media (min-width: 900px) {
+    .shopify-content [class*='-split'] {
+      grid-template-columns: 1fr 1fr;
+      align-items: start;
+    }
+  }
+
+  /* --- Prose measure inside the wider container --- */
+  .shopify-content > p,
+  .shopify-content [class*='prose'] p,
+  .shopify-content [class*='lines'] p,
+  .shopify-content [class*='split-text'] p {
+    max-width: 40rem;
+  }
+
+  /* --- Tables (size guide) --- */
+  .shopify-content table {
+    width: 100%;
+    margin: 2rem 0;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .shopify-content th,
+  .shopify-content td {
+    padding: 0.75rem 1rem;
+    border: 1px solid theme('colors.steel');
+    text-align: left;
+  }
+
+  .shopify-content th {
+    color: theme('colors.bone');
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 11px;
+  }
+
+  /* --- Marquee blocks authored in the page --- */
+  .shopify-content [class*='ticker'] {
+    overflow: hidden;
+    margin: 3rem 0;
+    padding: 0.9rem 0;
+    border-block: 1px solid theme('colors.steel');
+    white-space: nowrap;
+    color: theme('colors.mist');
+    font-size: 12px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+  }
+
+  /* --- Images the author placed inline --- */
+  .shopify-content img {
+    width: 100%;
+    height: auto;
+    margin: 2rem 0;
+  }
+
