@@ -6,6 +6,7 @@ import type {
   Product,
   ProductVariant,
 } from './types';
+import { normalizeDomain } from '../env';
 
 /**
  * Fail loudly and early when the storefront credentials are absent.
@@ -27,7 +28,7 @@ function required(name: string): string {
   return value;
 }
 
-const domain = required('SHOPIFY_STORE_DOMAIN');
+const domain = normalizeDomain(required('SHOPIFY_STORE_DOMAIN'));
 const token = required('SHOPIFY_STOREFRONT_ACCESS_TOKEN');
 const apiVersion = process.env.SHOPIFY_API_VERSION || '2025-07';
 const endpoint = `https://${domain}/api/${apiVersion}/graphql.json`;

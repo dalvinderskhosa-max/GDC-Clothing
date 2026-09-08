@@ -3,6 +3,7 @@ import { Archivo } from 'next/font/google';
 import './globals.css';
 import { getMenu } from '@/lib/shopify';
 import { BRAND } from '@/lib/brand';
+import { resolveSiteUrl } from '@/lib/env';
 import { CartProvider } from '@/components/cart/cart-context';
 import CartDrawer from '@/components/cart/cart-drawer';
 import Header from '@/components/layout/header';
@@ -21,10 +22,10 @@ const archivo = Archivo({
   display: 'swap',
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+const siteUrl = resolveSiteUrl();
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: siteUrl,
   title: {
     default: 'GDC Clothing — Money Oriented. Grind Focused.',
     template: '%s · GDC Clothing',
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
     title: 'GDC Clothing',
     description: BRAND.description,
     type: 'website',
-    url: siteUrl,
+    url: siteUrl.toString(),
     siteName: BRAND.name,
   },
   twitter: { card: 'summary_large_image', title: 'GDC Clothing', description: BRAND.description },

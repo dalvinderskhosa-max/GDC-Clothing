@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { normalizeDomain } from '@/lib/env';
 
 /**
  * Newsletter capture for a Headless storefront.
@@ -18,7 +19,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * account recovery. For campaign tooling proper, point this at an ESP instead.
  */
 
-const domain = process.env.SHOPIFY_STORE_DOMAIN!;
+const domain = normalizeDomain(process.env.SHOPIFY_STORE_DOMAIN || '');
 const apiVersion = process.env.SHOPIFY_API_VERSION || '2025-07';
 
 /**
