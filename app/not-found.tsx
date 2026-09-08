@@ -1,18 +1,24 @@
 import Link from 'next/link';
+import { Mark } from '@/components/brand/logo';
 
 export default function NotFound() {
   return (
-    <div className="container-site flex min-h-[60vh] flex-col items-center justify-center py-20 text-center">
-      <p className="text-8xl uppercase tracking-brand text-signal">404</p>
-      <h1 className="mt-2 text-3xl uppercase tracking-brand">
-        Page not found
-      </h1>
-      <p className="mt-3 max-w-sm text-sm text-mist">
-        This one got away. Head back and keep the grind going.
+    <div className="container-site flex min-h-[80svh] flex-col justify-center pt-[var(--header-h)]">
+      <Mark className="h-12 w-12 text-signal" />
+      <p className="t-label mt-8">Error 404</p>
+      <h1 className="t-h1 mt-4 max-w-2xl text-bone">This page took the L</h1>
+      <p className="t-body mt-6 max-w-sm">
+        The page you&apos;re after doesn&apos;t exist or has been moved. The drop is still live
+        though.
       </p>
-      <Link href="/" className="btn-solid mt-8">
-        Back to home
-      </Link>
+      <div className="mt-10 flex flex-wrap gap-3">
+        <Link href="/collections/drop-001" className="btn-solid">
+          Shop Drop 001
+        </Link>
+        <Link href="/" className="btn-ghost">
+          Back home
+        </Link>
+      </div>
     </div>
   );
 }
