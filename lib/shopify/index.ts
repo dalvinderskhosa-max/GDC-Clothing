@@ -7,8 +7,28 @@ import type {
   ProductVariant,
 } from './types';
 
-const domain = process.env.SHOPIFY_STORE_DOMAIN!;
-const token = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN!;
+/**
+ * Fail loudly and early when the storefront credentials are absent.
+ *
+ * Without this the domain interpolates as the string "undefined" and the build
+ * dies with `getaddrinfo ENOTFOUND undefined` while collecting page data —
+ * which says nothing about the actual problem. This is the first thing that
+ * bites on a fresh deploy target, so it is worth naming precisely.
+ */
+function required(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `[shopify] Missing required environment variable ${name}. ` +
+        'Set SHOPIFY_STORE_DOMAIN and SHOPIFY_STOREFRONT_ACCESS_TOKEN in your ' +
+        'hosting provider\'s environment settings (and in .env.local for local dev).',
+    );
+  }
+  return value;
+}
+
+const domain = required('SHOPIFY_STORE_DOMAIN');
+const token = required('SHOPIFY_STOREFRONT_ACCESS_TOKEN');
 const apiVersion = process.env.SHOPIFY_API_VERSION || '2025-07';
 const endpoint = `https://${domain}/api/${apiVersion}/graphql.json`;
 
