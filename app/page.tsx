@@ -11,6 +11,8 @@ import DropExperience from '@/components/home/drop-experience';
 import FilmBreak from '@/components/home/film-break';
 import Ticker from '@/components/home/ticker';
 import { Reveal, RevealText } from '@/components/motion/reveal';
+import { JsonLd } from '@/components/seo/json-ld';
+import { resolveSiteUrl } from '@/lib/env';
 
 export const revalidate = 1800;
 
@@ -43,8 +45,29 @@ export default async function HomePage() {
     .filter(Boolean)
     .slice(0, 4);
 
+  const base = resolveSiteUrl().origin;
+
   return (
     <>
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: BRAND.name,
+          url: base,
+          logo: `${base}/brand/gdc-logo.jpg`,
+          description: BRAND.description,
+          slogan: BRAND.tagline.join(' '),
+        }}
+      />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: BRAND.name,
+          url: base,
+        }}
+      />
       <HeroFilm />
 
       <Ticker

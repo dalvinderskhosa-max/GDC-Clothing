@@ -29,16 +29,31 @@ export function cn(...inputs: ClassValue[]): string {
  * Only formatting is removed; the markup and copy are left intact.
  */
 export function cleanShopifyHtml(html: string): string {
-  return html
-    .replace(/\s(?:style|class|align|bgcolor|width|height)="[^"]*"/gi, '')
-    .replace(/\s(?:style|class|align|bgcolor|width|height)='[^']*'/gi, '')
-    .replace(/<font[^>]*>/gi, '')
-    .replace(/<\/font>/gi, '');
+  return (
+    html
+      // Page bodies ship an entire embedded stylesheet — its own palette, font
+      // stack and centred layout — plus :root overrides that leak site-wide.
+      // With the class attributes stripped below, that CSS matches nothing
+      // anyway; left in place it only pollutes the cascade.
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      // The page header already renders the title, so a body h1 duplicates it.
+      .replace(/<h1[^>]*>[\s\S]*?<\/h1>/i, '')
+      .replace(/\s(?:style|class|align|bgcolor|width|height)="[^"]*"/gi, '')
+      .replace(/\s(?:style|class|align|bgcolor|width|height)='[^']*'/gi, '')
+      .replace(/<font[^>]*>/gi, '')
+      .replace(/<\/font>/gi, '')
+      // Empty wrappers left behind once their styling is gone.
+      .replace(/<(div|span)>\s*<\/\1>/gi, '')
+      .trim()
+  );
 }
 
 /** Shared prose styling for merchant-authored HTML. */
 export const PROSE = [
   'max-w-2xl text-[15px] leading-relaxed text-mist',
+  // First paragraph reads as a standfirst rather than body copy.
+  '[&>p:first-of-type]:text-[clamp(1.05rem,1.9vw,1.35rem)] [&>p:first-of-type]:leading-[1.55] [&>p:first-of-type]:text-bone [&>p:first-of-type]:mb-8',
   '[&_p]:mb-5',
   '[&_h1]:mt-14 [&_h1]:mb-5 [&_h1]:text-3xl [&_h1]:uppercase [&_h1]:leading-none [&_h1]:tracking-tight [&_h1]:text-bone',
   '[&_h2]:mt-14 [&_h2]:mb-5 [&_h2]:text-2xl [&_h2]:uppercase [&_h2]:leading-none [&_h2]:tracking-tight [&_h2]:text-bone',

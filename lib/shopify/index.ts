@@ -466,3 +466,67 @@ export async function removeFromCart(cartId: string, lineIds: string[]): Promise
   });
   return reshapeCart(data.cartLinesRemove.cart);
 }
+
+/** A single article. Returns null when the blog or article handle is unknown. */
+export async function getArticle(
+  blogHandle: string,
+  articleHandle: string,
+): Promise<Article | null> {
+  const data = await shopifyFetch<{ blog: { articleByHandle: Article | null } | null }>({
+    query: /* GraphQL */ `
+      query getArticle($blogHandle: String!, $articleHandle: String!) {
+        blog(handle: $blogHandle) {
+          articleByHandle(handle: $articleHandle) {
+            title
+            handle
+            excerpt
+            contentHtml
+            publishedAt
+            image { url altText width height }
+          }
+        }
+      }
+    `,
+    variables: { blogHandle, articleHandle },
+    tags: ['blog'],
+  });
+  return data.blog?.articleByHandle ?? null;
+}
+
+/** Blog handles, for static generation and the sitemap. */
+export async function getBlogHandles(): Promise<string[]> {
+  const data = await shopifyFetch<{ blogs: Edges<{ handle: string }> }>({
+    query: /* GraphQL */ `
+      query getBlogs {
+        blogs(first: 20) {
+          edges {
+            node {
+              handle
+            }
+          }
+        }
+      }
+    `,
+    tags: ['blog'],
+  });
+  return flatten<{ handle: string }>(data.blogs).map((b) => b.handle);
+}
+
+/** Page handles, for static generation and the sitemap. */
+export async function getPageHandles(): Promise<string[]> {
+  const data = await shopifyFetch<{ pages: Edges<{ handle: string }> }>({
+    query: /* GraphQL */ `
+      query getPages {
+        pages(first: 100) {
+          edges {
+            node {
+              handle
+            }
+          }
+        }
+      }
+    `,
+    tags: ['page'],
+  });
+  return flatten<{ handle: string }>(data.pages).map((p) => p.handle);
+}

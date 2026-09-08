@@ -8,12 +8,14 @@ const HELP = [
   { title: 'Shipping & returns', path: '/pages/shipping-returns' },
   { title: 'Size guide', path: '/pages/size-guide' },
   { title: 'Order tracking', path: '/pages/order-tracking' },
+  { title: 'Student discount', path: '/pages/student-discount' },
   { title: 'FAQs', path: '/pages/faqs' },
   { title: 'Contact', path: '/pages/contact' },
 ];
 
 const BRANDLINKS = [
-  { title: 'About us', path: '/pages/about-us' },
+  { title: 'Our story', path: '/pages/about-us' },
+  { title: 'The Grind', path: '/blogs/the-grind' },
   { title: 'Lookbook', path: '/pages/lookbook' },
   { title: 'Community', path: '/pages/community' },
   { title: 'Ambassadors', path: '/pages/ambassadors' },
@@ -51,11 +53,14 @@ export default function Footer({ menu }: { menu: MenuItem[] }) {
             © {new Date().getFullYear()} {BRAND.name}. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <Link href="/pages/cookie-policy" className="t-label link-wipe hover:text-bone">
-              Cookie policy
+            <Link href="/pages/privacy-policy" className="t-label link-wipe hover:text-bone">
+              Privacy
             </Link>
-            <Link href="/pages/faqs" className="t-label link-wipe hover:text-bone">
+            <Link href="/pages/terms-of-service" className="t-label link-wipe hover:text-bone">
               Terms
+            </Link>
+            <Link href="/pages/cookie-policy" className="t-label link-wipe hover:text-bone">
+              Cookies
             </Link>
           </div>
         </div>

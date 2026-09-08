@@ -7,6 +7,8 @@ import ProductGallery from '@/components/product/product-gallery';
 import ProductForm from '@/components/product/product-form';
 import ProductCard from '@/components/product/product-card';
 import { Reveal } from '@/components/motion/reveal';
+import { JsonLd } from '@/components/seo/json-ld';
+import { resolveSiteUrl } from '@/lib/env';
 
 export const revalidate = 1800;
 
@@ -41,8 +43,44 @@ export default async function ProductPage({ params }: { params: { handle: string
   const all = await getProducts(12, 'BEST_SELLING');
   const related = showable(all).filter((p) => p.handle !== product.handle).slice(0, 4);
 
+  const base = resolveSiteUrl().origin;
+  const url = `${base}/products/${product.handle}`;
+  const price = product.priceRange.minVariantPrice;
+
   return (
     <>
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: product.title,
+          description: product.description?.slice(0, 500) || undefined,
+          image: product.images.slice(0, 6).map((i) => i.url),
+          sku: product.handle,
+          brand: { '@type': 'Brand', name: 'GDC Clothing' },
+          offers: {
+            '@type': 'Offer',
+            url,
+            priceCurrency: price.currencyCode,
+            price: Number(price.amount).toFixed(2),
+            availability: product.availableForSale
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/OutOfStock',
+            itemCondition: 'https://schema.org/NewCondition',
+          },
+        }}
+      />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: base },
+            { '@type': 'ListItem', position: 2, name: 'Shop', item: `${base}/collections/shop-all` },
+            { '@type': 'ListItem', position: 3, name: product.title, item: url },
+          ],
+        }}
+      />
       <div className="pt-[var(--header-h)]">
         <div className="container-site flex items-center gap-2 py-5">
           <Link href="/" className="t-label link-wipe hover:text-bone">
