@@ -30,6 +30,7 @@ export type Product = {
   id: string;
   handle: string;
   title: string;
+  productType: string;
   description: string;
   descriptionHtml: string;
   availableForSale: boolean;

@@ -78,3 +78,26 @@ export function showable<T extends { handle: string; images: { url: string }[] }
     (p) => p.images.length > 0 && !DEMOTED.includes(p.handle),
   );
 }
+
+/**
+ * True fabric composition, by Shopify product type. The Shopify copy still opens
+ * its build list with the original wording — "Heavyweight cotton-blend fleece" on
+ * the tracksuit, "Heavyweight premium cotton" on the tees — and the Admin token
+ * has no product scope to correct it at source, so the claim is restated here.
+ * Delete this once the descriptions are edited in Shopify.
+ */
+const FABRIC: Record<string, { from: RegExp; to: string }> = {
+  Tracksuit: { from: /Heavyweight cotton-blend fleece/i, to: '100% polyester fleece' },
+  'T-Shirt': { from: /Heavyweight premium cotton/i, to: '100% cotton' },
+};
+
+/**
+ * Swaps a product's fabric claim for its true composition. Safe on both
+ * `descriptionHtml` and the plain-text `description` — the phrases it matches
+ * carry no markup — and each piece keeps its own trailing copy.
+ */
+export function restateFabric(text: string, productType: string): string {
+  const fabric = FABRIC[productType];
+  if (!text || !fabric) return text;
+  return text.replace(fabric.from, fabric.to);
+}

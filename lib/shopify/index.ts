@@ -7,6 +7,7 @@ import type {
   ProductVariant,
 } from './types';
 import { normalizeDomain } from '../env';
+import { restateFabric } from '../brand';
 
 /**
  * Fail loudly and early when the storefront credentials are absent.
@@ -87,6 +88,7 @@ const productFragment = /* GraphQL */ `
     id
     handle
     title
+    productType
     description
     descriptionHtml
     availableForSale
@@ -162,6 +164,8 @@ function flatten<T>(conn: Edges<T>): T[] {
 function reshapeProduct(node: any): Product {
   return {
     ...node,
+    description: restateFabric(node.description, node.productType),
+    descriptionHtml: restateFabric(node.descriptionHtml, node.productType),
     images: flatten<Image>(node.images),
     variants: flatten<ProductVariant>(node.variants),
   };
