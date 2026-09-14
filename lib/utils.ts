@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 import type { Money } from './shopify/types';
+import { rewriteShopifyLinks } from './links';
 
 export function formatMoney(money: Money | undefined | null): string {
   if (!money) return '';
@@ -30,7 +31,8 @@ export function cn(...inputs: ClassValue[]): string {
  */
 export function cleanShopifyHtml(html: string): string {
   return (
-    html
+    // Links first: merchant HTML points at the Shopify-hosted storefront.
+    rewriteShopifyLinks(html)
       // Strip the embedded stylesheet and its :root overrides, which otherwise
       // leak site-wide, and any scripts.
       .replace(/<style[\s\S]*?<\/style>/gi, '')

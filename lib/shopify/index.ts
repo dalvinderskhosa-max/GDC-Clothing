@@ -8,6 +8,7 @@ import type {
 } from './types';
 import { normalizeDomain } from '../env';
 import { restateFabric } from '../brand';
+import { toInternalHref } from '../links';
 
 /**
  * Fail loudly and early when the storefront credentials are absent.
@@ -34,6 +35,29 @@ const token = required('SHOPIFY_STOREFRONT_ACCESS_TOKEN');
 const apiVersion = process.env.SHOPIFY_API_VERSION || '2025-07';
 const endpoint = `https://${domain}/api/${apiVersion}/graphql.json`;
 
+/**
+ * The market every request is evaluated in.
+ *
+ * Without an explicit country Shopify infers one from the IP of whoever made
+ * the request — which for a headless store is the server, not the shopper. A
+ * cart minted from a region the shop does not sell to (a Vercel function in
+ * the wrong region, a developer abroad) has every line silently forced to
+ * quantity 0, and prices and availability drift with the server's location.
+ * Pinning the country keeps the storefront deterministic.
+ */
+export const MARKET_COUNTRY = (process.env.SHOPIFY_MARKET_COUNTRY || 'GB')
+  .trim()
+  .toUpperCase();
+
+/** Add `@inContext(country: …)` to the operation so Shopify evaluates it in our market. */
+function inMarket(query: string): string {
+  if (query.includes('@inContext')) return query;
+  return query.replace(
+    /^(\s*(?:query|mutation)\b[^{@]*?)\s*\{/m,
+    `$1 @inContext(country: ${MARKET_COUNTRY}) {`,
+  );
+}
+
 type GraphQLResponse<T> = {
   data: T;
   errors?: { message: string }[];
@@ -56,7 +80,7 @@ async function shopifyFetch<T>({
       'Content-Type': 'application/json',
       'X-Shopify-Storefront-Access-Token': token,
     },
-    body: JSON.stringify({ query, variables }),
+    body: JSON.stringify({ query: inMarket(query), variables }),
     cache,
     ...(tags ? { next: { tags } } : {}),
   });
@@ -125,6 +149,7 @@ const cartFragment = /* GraphQL */ `
     id
     checkoutUrl
     totalQuantity
+    buyerIdentity { countryCode }
     cost {
       subtotalAmount { amount currencyCode }
       totalAmount { amount currencyCode }
@@ -197,24 +222,25 @@ export async function getMenu(handle = 'main-menu'): Promise<MenuItem[]> {
     tags: ['menu'],
   });
 
-  const toPath = (url: string): string => {
-    try {
-      const u = new URL(url);
-      return u.pathname;
-    } catch {
-      return url;
-    }
+  // Shopify menu URLs are absolute links into the old storefront. Collapse
+  // the shop's own domains to paths, keep genuinely external links, and drop
+  // anything (search, account, cart) that has no page on this site.
+  const reshape = (item: any): MenuItem | null => {
+    const path = toInternalHref(item.url);
+    if (!path) return null;
+    return {
+      title: item.title,
+      path,
+      items: (item.items ?? [])
+        .map((sub: any) => {
+          const subPath = toInternalHref(sub.url);
+          return subPath ? { title: sub.title, path: subPath, items: [] } : null;
+        })
+        .filter(Boolean) as MenuItem[],
+    };
   };
 
-  return (data.menu?.items ?? []).map((item) => ({
-    title: item.title,
-    path: toPath(item.url),
-    items: (item.items ?? []).map((sub: any) => ({
-      title: sub.title,
-      path: toPath(sub.url),
-      items: [],
-    })),
-  }));
+  return (data.menu?.items ?? []).map(reshape).filter(Boolean) as MenuItem[];
 }
 
 /* ---------------------------- Collections ---------------------------------- */
@@ -396,17 +422,49 @@ export async function getBlogArticles(
 
 /* -------------------------------- Cart ------------------------------------- */
 
+type CartUserError = { code?: string; field?: string[] | null; message: string };
+type CartWarning = { code?: string; target?: string; message: string };
+type CartPayload = { cart: any | null; userErrors?: CartUserError[]; warnings?: CartWarning[] };
+
+/**
+ * Every cart mutation reports failures through `userErrors` rather than the
+ * top-level `errors` array, so a rejected update still comes back as HTTP 200
+ * with `cart: null`. Turn that into a thrown error with Shopify's own message
+ * instead of letting `reshapeCart(null)` blow up with something meaningless.
+ */
+function unwrapCart(payload: CartPayload, what: string): Cart {
+  const errors = payload.userErrors ?? [];
+  if (errors.length) {
+    throw new Error(`[shopify] ${what}: ${errors.map((e) => e.message).join('; ')}`);
+  }
+  if (!payload.cart) throw new Error(`[shopify] ${what}: Shopify returned no cart`);
+  const cart = reshapeCart(payload.cart);
+  // Warnings are not failures: Shopify applied what it could (e.g. capped a
+  // quantity at the stock on hand) and is telling us why. Surface them.
+  const warnings = (payload.warnings ?? []).map((w) => w.message).filter(Boolean);
+  return warnings.length ? { ...cart, warnings } : cart;
+}
+
+const userErrorsFragment = /* GraphQL */ `
+  userErrors { code field message }
+  warnings { code target message }
+`;
+
 export async function createCart(): Promise<Cart> {
-  const data = await shopifyFetch<{ cartCreate: { cart: any } }>({
+  const data = await shopifyFetch<{ cartCreate: CartPayload }>({
     query: /* GraphQL */ `
-      mutation createCart {
-        cartCreate { cart { ...cart } }
+      mutation createCart($country: CountryCode!) {
+        cartCreate(input: { buyerIdentity: { countryCode: $country } }) {
+          cart { ...cart }
+          ${userErrorsFragment}
+        }
       }
       ${cartFragment}
     `,
+    variables: { country: MARKET_COUNTRY },
     cache: 'no-store',
   });
-  return reshapeCart(data.cartCreate.cart);
+  return unwrapCart(data.cartCreate, 'createCart');
 }
 
 export async function getCart(cartId: string): Promise<Cart | null> {
@@ -423,52 +481,89 @@ export async function getCart(cartId: string): Promise<Cart | null> {
   return data.cart ? reshapeCart(data.cart) : null;
 }
 
+/**
+ * Re-home a cart in our market. Carts created before the country was pinned
+ * carry whatever country Shopify guessed from the server's IP; if that is a
+ * market the shop does not sell to, every line sits at quantity 0 and nothing
+ * the shopper does can move it. Updating the buyer identity restores them.
+ */
+export async function setCartCountry(cartId: string, country = MARKET_COUNTRY): Promise<Cart> {
+  const data = await shopifyFetch<{ cartBuyerIdentityUpdate: CartPayload }>({
+    query: /* GraphQL */ `
+      mutation setCartCountry($cartId: ID!, $country: CountryCode!) {
+        cartBuyerIdentityUpdate(cartId: $cartId, buyerIdentity: { countryCode: $country }) {
+          cart { ...cart }
+          ${userErrorsFragment}
+        }
+      }
+      ${cartFragment}
+    `,
+    variables: { cartId, country },
+    cache: 'no-store',
+  });
+  return unwrapCart(data.cartBuyerIdentityUpdate, 'setCartCountry');
+}
+
 export async function addToCart(
   cartId: string,
   lines: { merchandiseId: string; quantity: number }[],
 ): Promise<Cart> {
-  const data = await shopifyFetch<{ cartLinesAdd: { cart: any } }>({
+  const data = await shopifyFetch<{ cartLinesAdd: CartPayload }>({
     query: /* GraphQL */ `
       mutation addToCart($cartId: ID!, $lines: [CartLineInput!]!) {
-        cartLinesAdd(cartId: $cartId, lines: $lines) { cart { ...cart } }
+        cartLinesAdd(cartId: $cartId, lines: $lines) {
+          cart { ...cart }
+          ${userErrorsFragment}
+        }
       }
       ${cartFragment}
     `,
     variables: { cartId, lines },
     cache: 'no-store',
   });
-  return reshapeCart(data.cartLinesAdd.cart);
+  return unwrapCart(data.cartLinesAdd, 'addToCart');
 }
 
+/**
+ * Quantity-only update. `merchandiseId` is deliberately not sent: on
+ * `CartLineUpdateInput` it means "swap this line to a different variant", and
+ * passing the same one back is at best a no-op and at worst a line rebuild.
+ */
 export async function updateCart(
   cartId: string,
-  lines: { id: string; merchandiseId: string; quantity: number }[],
+  lines: { id: string; quantity: number }[],
 ): Promise<Cart> {
-  const data = await shopifyFetch<{ cartLinesUpdate: { cart: any } }>({
+  const data = await shopifyFetch<{ cartLinesUpdate: CartPayload }>({
     query: /* GraphQL */ `
       mutation updateCart($cartId: ID!, $lines: [CartLineUpdateInput!]!) {
-        cartLinesUpdate(cartId: $cartId, lines: $lines) { cart { ...cart } }
+        cartLinesUpdate(cartId: $cartId, lines: $lines) {
+          cart { ...cart }
+          ${userErrorsFragment}
+        }
       }
       ${cartFragment}
     `,
     variables: { cartId, lines },
     cache: 'no-store',
   });
-  return reshapeCart(data.cartLinesUpdate.cart);
+  return unwrapCart(data.cartLinesUpdate, 'updateCart');
 }
 
 export async function removeFromCart(cartId: string, lineIds: string[]): Promise<Cart> {
-  const data = await shopifyFetch<{ cartLinesRemove: { cart: any } }>({
+  const data = await shopifyFetch<{ cartLinesRemove: CartPayload }>({
     query: /* GraphQL */ `
       mutation removeFromCart($cartId: ID!, $lineIds: [ID!]!) {
-        cartLinesRemove(cartId: $cartId, lineIds: $lineIds) { cart { ...cart } }
+        cartLinesRemove(cartId: $cartId, lineIds: $lineIds) {
+          cart { ...cart }
+          ${userErrorsFragment}
+        }
       }
       ${cartFragment}
     `,
     variables: { cartId, lineIds },
     cache: 'no-store',
   });
-  return reshapeCart(data.cartLinesRemove.cart);
+  return unwrapCart(data.cartLinesRemove, 'removeFromCart');
 }
 
 /** A single article. Returns null when the blog or article handle is unknown. */

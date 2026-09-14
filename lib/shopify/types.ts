@@ -82,6 +82,10 @@ export type Cart = {
   id: string;
   checkoutUrl: string;
   totalQuantity: number;
+  /** Market the cart is priced and stocked against. */
+  buyerIdentity?: { countryCode: string | null };
+  /** Messages from the last mutation Shopify applied only partially (stock caps). */
+  warnings?: string[];
   cost: {
     subtotalAmount: Money;
     totalAmount: Money;

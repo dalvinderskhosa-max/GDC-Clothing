@@ -10,7 +10,6 @@ import ContactPanel from '@/components/content/contact-panel';
 import LookbookGallery from '@/components/content/lookbook-gallery';
 import { getProducts } from '@/lib/shopify';
 import { showable } from '@/lib/brand';
-import { normalizeDomain } from '@/lib/env';
 
 export const revalidate = 3600;
 
@@ -70,9 +69,7 @@ export default async function ContentPage({ params }: { params: { handle: string
       <article className="container-site py-[clamp(2.5rem,7vh,5rem)]">
         {body && <div className={PROSE} dangerouslySetInnerHTML={{ __html: body }} />}
 
-        {isContact && (
-          <ContactPanel storeDomain={normalizeDomain(process.env.SHOPIFY_STORE_DOMAIN || '')} />
-        )}
+        {isContact && <ContactPanel />}
 
         {isLookbook && galleryProducts.length > 0 && (
           <div className={body ? 'mt-14' : ''}>

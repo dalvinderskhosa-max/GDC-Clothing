@@ -7,7 +7,8 @@ import { formatMoney, cn } from '@/lib/utils';
 import { cutout } from '@/lib/cutouts';
 
 export default function CartDrawer() {
-  const { cart, isOpen, closeCart, updateQuantity, removeItem, isPending } = useCart();
+  const { cart, isOpen, closeCart, updateQuantity, removeItem, isPending, error, notice } =
+    useCart();
 
   return (
     <>
@@ -94,8 +95,9 @@ export default function CartDrawer() {
                       </Link>
                       <button
                         onClick={() => removeItem(line.id)}
+                        disabled={isPending}
                         aria-label="Remove item"
-                        className="text-mist hover:text-bone"
+                        className="text-mist hover:text-bone disabled:opacity-40"
                       >
                         &times;
                       </button>
@@ -103,34 +105,36 @@ export default function CartDrawer() {
                     {line.merchandise.title !== 'Default Title' && (
                       <p className="mt-1 text-xs text-mist">{line.merchandise.title}</p>
                     )}
+                    {line.quantity === 0 && (
+                      <p className="mt-1 text-xs text-signal">
+                        Currently unavailable &middot; remove to continue
+                      </p>
+                    )}
 
                     <div className="mt-auto flex items-center justify-between pt-3">
-                      <div className="flex items-center border border-steel">
+                      <div
+                        className={cn(
+                          'flex items-center border border-steel transition-opacity',
+                          isPending && 'opacity-50',
+                        )}
+                      >
                         <button
-                          onClick={() =>
-                            updateQuantity(
-                              line.id,
-                              line.merchandise.id,
-                              line.quantity - 1,
-                            )
-                          }
-                          className="px-2.5 py-1 hover:bg-ash"
+                          type="button"
+                          onClick={() => updateQuantity(line.id, line.quantity - 1)}
+                          disabled={isPending}
+                          className="px-2.5 py-1 hover:bg-ash disabled:cursor-wait"
                           aria-label="Decrease quantity"
                         >
                           &minus;
                         </button>
-                        <span className="min-w-[2rem] text-center text-sm">
+                        <span className="min-w-[2rem] text-center text-sm" aria-live="polite">
                           {line.quantity}
                         </span>
                         <button
-                          onClick={() =>
-                            updateQuantity(
-                              line.id,
-                              line.merchandise.id,
-                              line.quantity + 1,
-                            )
-                          }
-                          className="px-2.5 py-1 hover:bg-ash"
+                          type="button"
+                          onClick={() => updateQuantity(line.id, line.quantity + 1)}
+                          disabled={isPending || line.quantity === 0}
+                          className="px-2.5 py-1 hover:bg-ash disabled:cursor-wait disabled:opacity-40"
                           aria-label="Increase quantity"
                         >
                           +
@@ -146,6 +150,11 @@ export default function CartDrawer() {
             </ul>
 
             <footer className="border-t border-steel px-5 py-5">
+              {(error || notice) && (
+                <p role="alert" className="mb-4 text-xs text-signal">
+                  {error || notice}
+                </p>
+              )}
               <div className="mb-1 flex justify-between text-sm text-mist">
                 <span>Subtotal</span>
                 <span>{formatMoney(cart.cost.subtotalAmount)}</span>

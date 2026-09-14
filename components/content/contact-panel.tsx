@@ -7,10 +7,13 @@ import Link from 'next/link';
  * is rejected with 403 by its bot protection.
  *
  * Rather than ship a form that silently goes nowhere, this routes people to the
- * channels that actually work. Set NEXT_PUBLIC_SUPPORT_EMAIL to surface a
- * direct mailto; until then the store's own contact form is linked, which is
- * live and monitored.
+ * channels that actually work: the self-serve pages and a direct email. The
+ * address defaults to the one the merchant publishes in their own page copy
+ * and can be overridden with NEXT_PUBLIC_SUPPORT_EMAIL. It must never fall
+ * back to the Shopify-hosted storefront — that is the old site.
  */
+
+const DEFAULT_SUPPORT_EMAIL = 'hello@gdc-clothing.com';
 
 const SELF_SERVE = [
   {
@@ -39,8 +42,8 @@ const SELF_SERVE = [
   },
 ];
 
-export default function ContactPanel({ storeDomain }: { storeDomain: string }) {
-  const email = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
+export default function ContactPanel() {
+  const email = (process.env.NEXT_PUBLIC_SUPPORT_EMAIL || DEFAULT_SUPPORT_EMAIL).trim();
 
   return (
     <div className="max-w-5xl">
@@ -72,25 +75,12 @@ export default function ContactPanel({ storeDomain }: { storeDomain: string }) {
 
       <div className="mt-14 border-t border-steel pt-10">
         <p className="t-label mb-5">Talk to a human</p>
-        {email ? (
-          <a href={`mailto:${email}`} className="btn-solid">
-            Email {email}
-          </a>
-        ) : (
-          <>
-            <a
-              href={`https://${storeDomain}/pages/contact`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-solid"
-            >
-              Send us a message
-            </a>
-            <p className="t-body mt-4 max-w-md text-[13px]">
-              Opens our secure contact form in a new tab.
-            </p>
-          </>
-        )}
+        <a href={`mailto:${email}`} className="btn-solid">
+          Email {email}
+        </a>
+        <p className="t-body mt-4 max-w-md text-[13px]">
+          We reply within two working days.
+        </p>
       </div>
     </div>
   );

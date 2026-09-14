@@ -8,6 +8,7 @@ import ProductForm from '@/components/product/product-form';
 import ProductCard from '@/components/product/product-card';
 import { Reveal } from '@/components/motion/reveal';
 import { JsonLd } from '@/components/seo/json-ld';
+import { rewriteShopifyLinks } from '@/lib/links';
 import { resolveSiteUrl } from '@/lib/env';
 
 export const revalidate = 1800;
@@ -112,7 +113,9 @@ export default async function ProductPage({ params }: { params: { handle: string
                 {product.descriptionHtml && (
                   <div
                     className="mt-10 space-y-4 border-t border-steel pt-8 text-[14px] leading-relaxed text-mist [&_a]:underline [&_li]:ml-5 [&_li]:list-disc [&_strong]:text-bone"
-                    dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
+                    dangerouslySetInnerHTML={{
+                      __html: rewriteShopifyLinks(product.descriptionHtml),
+                    }}
                   />
                 )}
 
